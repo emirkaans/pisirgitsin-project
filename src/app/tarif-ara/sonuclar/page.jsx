@@ -9,13 +9,19 @@ import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 
 function ResultsContent() {
   const searchParams = useSearchParams();
-  const ingredients = searchParams.get("ingredients");
+  const ingredients = searchParams.get("malzemeler");
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [error, setError] = useState(null);
   const [recipeRatings, setRecipeRatings] = useState({});
   const [likedRecipes, setLikedRecipes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { isUserLoggedIn } = useAuth();
+  const ingredientList = ingredients
+    ? ingredients
+        .split(",")
+        .map((term) => term.trim())
+        .filter(Boolean)
+    : [];
 
   useEffect(() => {
     const savedRatings = JSON.parse(
@@ -46,16 +52,6 @@ function ResultsContent() {
 
     localStorage.setItem("likedRecipes", JSON.stringify(newLikedRecipes));
     setLikedRecipes(newLikedRecipes);
-  };
-
-  const extractIngredientName = (ingredient) => {
-    return ingredient
-      .replace(
-        /^\d+(?:[.,]\d+)?\s*(adet|su bardağı|çay bardağı|yemek kaşığı|tatlı kaşığı|çay kaşığı|gram|kg|ml|lt|dilim|demet|bağ|tutam|fincan|kâse|kase|parça|dilim|küp|küçük|orta|iri|büyük|küçük boy|orta boy|iri boy|küçük boyda|orta boyda|iri boyda|küçük boyutlu|orta boyutlu|iri boyutlu|küçük parça|orta parça|iri parça|küçük doğranmış|orta doğranmış|iri doğranmış|küçük halka|orta halka|iri halka|küçük küp|orta küp|iri küp|küçük dilim|orta dilim|iri dilim|küçük parçalar|orta parçalar|iri parçalar|küçük doğranmış|orta doğranmış|iri doğranmış|küçük halkalar|orta halkalar|iri halkalar|küçük küpler|orta küpler|iri küpler|küçük dilimler|orta dilimler|iri dilimler)\s*/gi,
-        ""
-      )
-      .replace(/^\d+(?:[.,]\d+)?\s*/, "")
-      .trim();
   };
 
   useEffect(() => {
@@ -117,7 +113,10 @@ function ResultsContent() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl border-b font-medium text-gray-900 mb-8">
-          {ingredients.split(",").join(", ")} ile Yapılabilecek Tarifler
+          {ingredientList.length > 0
+            ? ingredientList.join(", ")
+            : "Seçili malzeme yok"}{" "}
+          ile Yapılabilecek Tarifler
         </h1>
 
         {isLoading ? (
@@ -216,12 +215,12 @@ function ResultsContent() {
                         Eksik Malzemeler:
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {recipe.missingIngredients.map((malzeme, index) => (
+                        {recipe.missingIngredients.map((ingredient, index) => (
                           <span
                             key={index}
                             className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-full border capitalize border-red-100"
                           >
-                            {extractIngredientName(malzeme)}
+                            {ingredient?.ingredient}
                           </span>
                         ))}
                       </div>
