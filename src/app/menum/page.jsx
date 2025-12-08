@@ -83,7 +83,7 @@ const MenuPage = () => {
     const quantityMap = {};
 
     selectedRecipesData.forEach((recipe) => {
-      recipe.malzemeler.forEach((ingredient) => {
+      recipe.ingredients.forEach((ingredient) => {
         const match = ingredient.match(
           /^(\d+)\s+((?:adet|su bardağı|yemek kaşığı|çay kaşığı|gram)\s+)?(.+)$/
         );
@@ -214,7 +214,7 @@ const MenuPage = () => {
                             href={`/tarif/${recipe.id}`}
                             className="text-gray-900 hover:text-green-600 font-medium"
                           >
-                            {recipe.isim}
+                            {recipe.name}
                           </Link>
                         </div>
                         <button

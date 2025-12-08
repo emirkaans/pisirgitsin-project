@@ -18,24 +18,24 @@ const SearchResults = () => {
 
     const searchTerm = query.toLowerCase();
     return recipes.filter((recipe) => {
-      if (recipe.isim.toLowerCase().includes(searchTerm)) return true;
+      if (recipe.name.toLowerCase().includes(searchTerm)) return true;
 
       if (
-        recipe.malzemeler.some((malzeme) =>
+        recipe.ingredients.some((malzeme) =>
           malzeme.toLowerCase().includes(searchTerm)
         )
       )
         return true;
 
       if (
-        recipe.kategoriler.some((kategori) =>
+        recipe.sub_categories.some((kategori) =>
           kategori.toLowerCase().includes(searchTerm)
         )
       )
         return true;
 
       if (
-        recipe.etiketler?.some((etiket) =>
+        recipe.labels?.some((etiket) =>
           etiket.toLowerCase().includes(searchTerm)
         )
       )
@@ -107,27 +107,27 @@ const SearchResults = () => {
               >
                 <div className="relative h-48">
                   <img
-                    src={recipe.resim}
-                    alt={recipe.isim}
+                    src={recipe.image_url}
+                    alt={recipe.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    {recipe.isim}
+                    {recipe.name}
                   </h2>
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <span className="flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      {recipe.zorluk}
+                      {recipe.difficulty}
                     </span>
                     <span className="flex items-center">
                       <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                      {recipe.süre}
+                      {recipe.time_in_minutes}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {recipe.etiketler?.map((tag, index) => (
+                    {recipe.labels?.map((tag, index) => (
                       <span
                         key={index}
                         className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"

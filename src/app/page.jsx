@@ -223,18 +223,18 @@ export default function Home() {
                 >
                   <div className="relative h-48">
                     <img
-                      src={recipe.resim}
-                      alt={recipe.isim}
+                      src={recipe.image_url}
+                      alt={recipe.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="p-4">
                     <h3 className="text-xl text-stone-900 font-semibold mb-2">
-                      {recipe.isim}
+                      {recipe.name}
                     </h3>
                     <div className="flex items-center text-sm text-gray-500">
-                      <span className="mr-3">⏱ {recipe.süre}</span>
-                      <span>💪 {recipe.zorluk}</span>
+                      <span className="mr-3">⏱ {recipe.time_in_minutes}</span>
+                      <span>💪 {recipe.difficulty}</span>
                     </div>
                   </div>
                 </Link>

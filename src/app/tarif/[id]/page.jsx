@@ -176,7 +176,7 @@ const RecipeDetail = () => {
     );
   }
 
-  if (!recipe.hazırlık || !Array.isArray(recipe.hazırlık)) {
+  if (!recipe.instructions || !Array.isArray(recipe.instructions)) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
@@ -207,8 +207,8 @@ const RecipeDetail = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="relative h-96">
             <img
-              src={recipe.resim}
-              alt={recipe.isim}
+              src={recipe.image_url}
+              alt={recipe.name}
               className="w-full h-full object-cover"
             />
           </div>
@@ -218,14 +218,14 @@ const RecipeDetail = () => {
               <div className="flex items-center gap-4 justify-between">
                 {" "}
                 <h1 className="text-[30px] font-bold text-gray-900 ">
-                  {recipe.isim}
+                  {recipe.name}
                 </h1>{" "}
                 <div className="flex gap-4 text-sm text-gray-500 mt-1">
                   <div className="flex items-center gap-1">
-                    ⏱ <span>{recipe.süre || "Süre belirtilmemiş"}</span>
+                    ⏱ <span>{recipe.time_in_minutes || "Süre belirtilmemiş"}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    💪 <span>{recipe.zorluk || "Zorluk belirtilmemiş"}</span>
+                    💪 <span>{recipe.difficulty || "Zorluk belirtilmemiş"}</span>
                   </div>
                 </div>
                 <div className="flex items-center ml-auto  gap-2">
@@ -277,7 +277,7 @@ const RecipeDetail = () => {
               </div>
               <div>
                 <div className="flex flex-wrap gap-2">
-                  {recipe.kategoriler.map((kategori, index) => {
+                  {recipe.sub_categories.map((kategori, index) => {
                     const categoryMap = {
                       "Ana Yemekler": 1,
                       Tatlılar: 2,
@@ -325,7 +325,7 @@ const RecipeDetail = () => {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {recipe.etiketler?.map((etiket, i) => (
+                {recipe.labels?.map((etiket, i) => (
                   <Link
                     href={`/etiketler/${encodeURIComponent(etiket)}`}
                     key={i}
@@ -376,7 +376,7 @@ const RecipeDetail = () => {
                 Malzemeler
               </h2>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {recipe.malzemeler.map((malzeme, index) => (
+                {recipe.ingredients.map((malzeme, index) => (
                   <li key={index} className="flex items-center text-gray-700">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                     {malzeme}
@@ -390,7 +390,7 @@ const RecipeDetail = () => {
                 Hazırlanış
               </h2>
               <div className="space-y-4">
-                {recipe.hazırlık.map((adım, index) => (
+                {recipe.instructions.map((adım, index) => (
                   <div key={index} className="flex items-center">
                     <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                       <span className="text-green-600 font-semibold">

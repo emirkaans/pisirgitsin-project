@@ -55,8 +55,8 @@ const CategoryRecipes = () => {
       }
 
       const filteredRecipes = recipes.filter((recipe) => {
-        const recipeCategories = Array.isArray(recipe.kategoriler)
-          ? recipe.kategoriler
+        const recipeCategories = Array.isArray(recipe.sub_categories)
+          ? recipe.sub_categories
           : Array.isArray(recipe.kategori)
           ? recipe.kategori
           : [recipe.kategori];
@@ -124,8 +124,8 @@ const CategoryRecipes = () => {
                 >
                   <div className="relative h-48">
                     <img
-                      src={recipe.resim}
-                      alt={recipe.isim}
+                      src={recipe.image_url}
+                      alt={recipe.name}
                       className="w-full h-full object-cover"
                     />
                     <button
@@ -151,7 +151,7 @@ const CategoryRecipes = () => {
                   </div>
                   <div className="p-4">
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                      {recipe.isim}
+                      {recipe.name}
                     </h2>
                     <div className="flex items-center mb-2">
                       <div className="flex items-center">
@@ -181,12 +181,12 @@ const CategoryRecipes = () => {
                         Malzemeler:
                       </h3>
                       <ul className="text-sm text-gray-600 list-disc list-inside">
-                        {recipe.malzemeler.slice(0, 3).map((malzeme, index) => (
+                        {recipe.ingredients.slice(0, 3).map((malzeme, index) => (
                           <li key={index}>{malzeme}</li>
                         ))}
-                        {recipe.malzemeler.length > 3 && (
+                        {recipe.ingredients.length > 3 && (
                           <li className="text-gray-500">
-                            ve {recipe.malzemeler.length - 3} malzeme daha...
+                            ve {recipe.ingredients.length - 3} malzeme daha...
                           </li>
                         )}
                       </ul>

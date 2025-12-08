@@ -11,7 +11,7 @@ const EtiketSayfasi = () => {
   const etiket = decodeURIComponent(params.etiket);
 
   const etiketliTarifler = recipes.filter((recipe) =>
-    recipe.etiketler.includes(etiket)
+    recipe.labels.includes(etiket)
   );
 
   const handleBack = () => {
@@ -49,27 +49,27 @@ const EtiketSayfasi = () => {
               >
                 <div className="relative h-48">
                   <img
-                    src={recipe.resim}
-                    alt={recipe.isim}
+                    src={recipe.image_url}
+                    alt={recipe.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    {recipe.isim}
+                    {recipe.name}
                   </h2>
                   <div className="flex items-center gap-4 text-sm text-gray-600">
                     <span className="flex items-center">
                       <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      {recipe.zorluk}
+                      {recipe.difficulty}
                     </span>
                     <span className="flex items-center">
                       <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                      {recipe.süre}
+                      {recipe.time_in_minutes}
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {recipe.etiketler.map((tag, index) => (
+                    {recipe.labels.map((tag, index) => (
                       <span
                         key={index}
                         className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"

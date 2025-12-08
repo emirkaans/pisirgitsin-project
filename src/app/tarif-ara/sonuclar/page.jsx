@@ -9,7 +9,7 @@ import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 
 function ResultsContent() {
   const searchParams = useSearchParams();
-  const ingredients = searchParams.get("malzemeler");
+  const ingredients = searchParams.get("ingredients");
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [error, setError] = useState(null);
   const [recipeRatings, setRecipeRatings] = useState({});
@@ -68,7 +68,7 @@ function ResultsContent() {
 
         const filtered = recipes
           .map((recipe) => {
-            const missingIngredients = recipe.malzemeler.filter((ing) => {
+            const missingIngredients = recipe.ingredients.filter((ing) => {
               const ingredient = ing.toLowerCase();
               return !searchTerms.some((term) => ingredient.includes(term));
             });
@@ -79,7 +79,7 @@ function ResultsContent() {
             };
           })
           .filter((recipe) => {
-            const recipeIngredients = recipe.malzemeler.map((ing) =>
+            const recipeIngredients = recipe.ingredients.map((ing) =>
               ing.toLowerCase()
             );
             return searchTerms.some((term) =>
@@ -141,8 +141,8 @@ function ResultsContent() {
               >
                 <div className="relative h-48">
                   <img
-                    src={recipe.resim}
-                    alt={recipe.isim}
+                    src={recipe.image_url}
+                    alt={recipe.name}
                     className="w-full h-full object-cover"
                   />
                   <button
@@ -166,7 +166,7 @@ function ResultsContent() {
                 </div>
                 <div className="p-4">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                    {recipe.isim}
+                    {recipe.name}
                   </h2>
                   <p className="text-sm text-gray-600 mb-2">
                     Kategori: {recipe.kategori}
@@ -200,7 +200,7 @@ function ResultsContent() {
                       Malzemeler:
                     </h3>
                     <ul className="text-sm text-gray-600 list-disc list-inside">
-                      {recipe.malzemeler.map((malzeme, index) => (
+                      {recipe.ingredients.map((malzeme, index) => (
                         <li key={index}>{malzeme}</li>
                       ))}
                     </ul>
