@@ -65,7 +65,7 @@ const EtiketSayfasi = () => {
                     </span>
                     <span className="flex items-center">
                       <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                      {recipe.time_in_minutes}
+                      {recipe.time_in_minutes} dk
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">

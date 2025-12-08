@@ -58,17 +58,12 @@
       "Domatesleri ekleyin",
       "Yumurtaları kırın, karıştırarak pişirin"
     ],
-    "sub_categories": [
-      "Kahvaltılıklar",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Kahvaltılıklar", "Vejetaryen"],
     "image_url": "https://c.ndtvimg.com/2023-06/3up41pfg_eggs_625x300_05_June_23.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "20 dk",
-    "labels": [
-      "pratik",
-      "vejetaryen"
-    ]
+    "time_in_minutes": 20,
+    "labels": ["pratik", "vejetaryen"],
+    "main_category": "Kahvaltılıklar"
   },
   {
     "id": 2,
@@ -129,17 +124,12 @@
       "Salçayı ekleyin, mercimeği ve suyu ilave edip kaynatın",
       "Blender'dan geçirin, tuz ve baharatları ekleyin"
     ],
-    "sub_categories": [
-      "Çorbalar",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Çorbalar", "Vejetaryen"],
     "image_url": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcT2HJm6kbA9tV7usVCs2_oCuPXckJqvRHi94YiVwQO0TbtChbxFH09Hkel8wwxbuEM19pFEEyQ6yWDd6kGIPLSQFcRix7JYqtOcQ_lMOMA",
     "difficulty": "Kolay",
-    "time_in_minutes": "35 dk",
-    "labels": [
-      "sağlıklı",
-      "ekonomik"
-    ]
+    "time_in_minutes": 35,
+    "labels": ["sağlıklı", "ekonomik"],
+    "main_category": "Çorbalar"
   },
   {
     "id": 3,
@@ -208,20 +198,13 @@
       "Patates ve havuçları doğrayarak tavuklarla birlikte harmanlayın.",
       "Fırın tepsisine yerleştirip 200°C'de 45 dakika pişirin."
     ],
-    "sub_categories": [
-      "Ana Yemekler",
-      "Tavuk Yemekleri"
-    ],
+    "sub_categories": ["Ana Yemekler", "Tavuk Yemekleri"],
     "image_url": "https://www.sibelelcin.com/wp-content/uploads/2024/03/firinda-sebzeli-tavuk-tarifi-500x500.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "60 dk",
-    "labels": [
-      "fırın",
-      "tavuk",
-      "pratik",
-      "aile"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 60,
+    "labels": ["fırın", "tavuk", "pratik", "aile"],
+    "öne_çıkar": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 4,
@@ -276,17 +259,12 @@
       "Borcamın tabanına bisküvi dizin, üzerine pudingi dökün.",
       "Kat kat devam edip en üstüne puding dökün, buzdolabında soğutun."
     ],
-    "sub_categories": [
-      "Tatlılar"
-    ],
+    "sub_categories": ["Tatlılar"],
     "image_url": "https://recipesblob.droetker.com.tr/assets/b7e761e6404b4856b147ce5628bf6ef4/1272x764/pudingli-biskuvili-pasta.webp",
     "difficulty": "Kolay",
-    "time_in_minutes": "25 dk",
-    "labels": [
-      "tatlı",
-      "pratik",
-      "çocuklar için"
-    ]
+    "time_in_minutes": 25,
+    "labels": ["tatlı", "pratik", "çocuklar için"],
+    "main_category": "Tatlılar"
   },
   {
     "id": 5,
@@ -369,21 +347,13 @@
       "Kızgın yağda altın rengi olana kadar kızartın.",
       "Kağıt havlu üzerinde dinlendirip servis yapın."
     ],
-    "sub_categories": [
-      "Vejetaryen",
-      "Glutensiz",
-      "Baklagil Yemekleri"
-    ],
+    "sub_categories": ["Vejetaryen", "Glutensiz", "Baklagil Yemekleri"],
     "image_url": "https://static01.nyt.com/images/2024/01/10/multimedia/10Felafel-wqbp/10Felafel-wqbp-superJumbo.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "40 dk",
-    "labels": [
-      "vegan",
-      "glutensiz",
-      "atıştırmalık",
-      "baharatlı"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 40,
+    "labels": ["vegan", "glutensiz", "atıştırmalık", "baharatlı"],
+    "öne_çıkar": true,
+    "main_category": "Aperatifler"
   },
   {
     "id": 6,
@@ -445,18 +415,12 @@
       "Doğradığınız mantarları ekleyip yüksek ateşte soteleyin.",
       "Baharatları ilave edip birkaç dakika daha pişirin."
     ],
-    "sub_categories": [
-      "Zeytinyağlılar",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Zeytinyağlılar", "Vejetaryen"],
     "image_url": "https://i.lezzet.com.tr/images-xxlarge-recipe/istiridye-mantari-kebabi-7a2f5c88-5f50-4bbc-b7ab-07a1b1ebd3e9.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "25 dk",
-    "labels": [
-      "vejetaryen",
-      "mantarlı",
-      "hafif"
-    ]
+    "time_in_minutes": 25,
+    "labels": ["vejetaryen", "mantarlı", "hafif"],
+    "main_category": "Zeytinyağlılar"
   },
   {
     "id": 7,
@@ -531,19 +495,13 @@
       "İç harcı kıyma, soğan, sarımsak ve domatesle pişirip patlıcanlara doldurun",
       "Fırında pişirin"
     ],
-    "sub_categories": [
-      "Et Yemekleri",
-      "Ana Yemek"
-    ],
+    "sub_categories": ["Et Yemekleri", "Ana Yemek"],
     "image_url": "https://cdn.kisikatesakademi.com.tr/image-cache/cache/recipe_main_image_large/https---cdn.kisikatesakademi.com.tr/recipe-media/8b2e48a95972e19988c8abbed25512692183c7e7.jpeg",
     "difficulty": "Orta",
-    "time_in_minutes": "55 dk",
-    "labels": [
-      "geleneksel",
-      "fırın",
-      "doyurucu"
-    ],
-    "popüler": true
+    "time_in_minutes": 55,
+    "labels": ["geleneksel", "fırın", "doyurucu"],
+    "popüler": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 8,
@@ -618,20 +576,13 @@
       "Baharatları ilave edin",
       "Yapraklara sarıp tencerede pişirin"
     ],
-    "sub_categories": [
-      "Zeytinyağlılar",
-      "Vejetaryen",
-      "Atıştırmalıklar"
-    ],
+    "sub_categories": ["Zeytinyağlılar", "Vejetaryen", "Atıştırmalıklar"],
     "image_url": "https://d17wu0fn6x6rgz.cloudfront.net/img/w/tarif/mgt/zeytinyagli_sarma.webp",
     "difficulty": "Orta",
-    "time_in_minutes": "70 dk",
-    "labels": [
-      "zeytinyağlı",
-      "vejetaryen",
-      "geleneksel"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 70,
+    "labels": ["zeytinyağlı", "vejetaryen", "geleneksel"],
+    "öne_çıkar": true,
+    "main_category": "Zeytinyağlılar"
   },
   {
     "id": 9,
@@ -729,19 +680,12 @@
       "Bulgurlu karışımla birleştirip yoğurun.",
       "Taze soğan ve maydanozu ekleyin, şekil verip servis yapın."
     ],
-    "sub_categories": [
-      "Zeytinyağlılar",
-      "Atıştırmalıklar",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Zeytinyağlılar", "Atıştırmalıklar", "Vejetaryen"],
     "image_url": "https://vidarbergum.com/wp-content/uploads/2021/01/turkish-lentil-meatballs-mercimek-koftesi-2.jpg.webp",
     "difficulty": "Kolay",
-    "time_in_minutes": "40 dk",
-    "labels": [
-      "vejetaryen",
-      "atıştırmalık",
-      "sağlıklı"
-    ]
+    "time_in_minutes": 40,
+    "labels": ["vejetaryen", "atıştırmalık", "sağlıklı"],
+    "main_category": "Aperatifler"
   },
   {
     "id": 10,
@@ -804,19 +748,12 @@
       "Üzerini geçecek kadar sıcak su ekleyin.",
       "Kısık ateşte 30–40 dakika pişirin."
     ],
-    "sub_categories": [
-      "Baklagil Yemekleri",
-      "Ana Yemek",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Baklagil Yemekleri", "Ana Yemek", "Vejetaryen"],
     "image_url": "https://cdn.ye-mek.net/App_UI/Img/out/650/2024/09/sebzeli-kuru-fasulye-yemegi-resimli-yemek-tarifi(11).jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "90 dk",
-    "labels": [
-      "geleneksel",
-      "ekonomik",
-      "doyurucu"
-    ]
+    "time_in_minutes": 90,
+    "labels": ["geleneksel", "ekonomik", "doyurucu"],
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 11,
@@ -872,19 +809,14 @@
       "Damla çikolatayı ekleyip karıştırın.",
       "Kaşıkla tepsiye dizin ve önceden ısıtılmış 180°C fırında 12-15 dakika pişirin."
     ],
-    "sub_categories": [
-      "Tatlılar"
-    ],
+    "sub_categories": ["Tatlılar"],
     "image_url": "https://iasbh.tmgrup.com.tr/983bea/1200/627/0/24/748/414?u=https://isbh.tmgrup.com.tr/sbh/2020/04/15/agizda-dagilan-damla-cikolatali-kurabiye-tarifi-damla-cikolata-kurabiye-nasil-yapilir-1586956792713.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "30 dk",
-    "labels": [
-      "tatlı",
-      "çocuklar için",
-      "pratik"
-    ],
+    "time_in_minutes": 30,
+    "labels": ["tatlı", "çocuklar için", "pratik"],
     "öne_çıkar": true,
-    "popüler": true
+    "popüler": true,
+    "main_category": "Tatlılar"
   },
   {
     "id": 12,
@@ -961,19 +893,13 @@
       "Patlıcanları ortadan ikiye kesip içlerini çıkarın.",
       "İçlerine kıymalı harçtan koyup fırında pişirin."
     ],
-    "sub_categories": [
-      "Ana Yemekler",
-      "Et Yemekleri"
-    ],
+    "sub_categories": ["Ana Yemekler", "Et Yemekleri"],
     "image_url": "https://urfanatikcom.teimg.com/urfanatik-com/sites/2023/04/21/orijinal-antep-usulu-patlican-kebabi-3-1682004026.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "60 dk",
-    "labels": [
-      "geleneksel",
-      "fırın",
-      "doyurucu"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 60,
+    "labels": ["geleneksel", "fırın", "doyurucu"],
+    "öne_çıkar": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 13,
@@ -1068,18 +994,13 @@
       "Çikolata sosu için kremayı ısıtın, içine çikolatayı ekleyip eriyene kadar karıştırın.",
       "Doldurduğunuz topların üzerine çikolata sosunu gezdirin ve soğutarak servis edin."
     ],
-    "sub_categories": [
-      "Tatlılar"
-    ],
+    "sub_categories": ["Tatlılar"],
     "image_url": "https://www.bizimmutfak.com.tr/wp-content/uploads/2023/09/cikolata-sosu-ile-profiterol-hamur.jpg",
     "difficulty": "Zor",
-    "time_in_minutes": "90 dk",
-    "labels": [
-      "tatlı",
-      "özel günler",
-      "çikolatalı"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 90,
+    "labels": ["tatlı", "özel günler", "çikolatalı"],
+    "öne_çıkar": true,
+    "main_category": "Tatlılar"
   },
   {
     "id": 14,
@@ -1126,18 +1047,12 @@
       "Yağ ve salçayı kavurun",
       "Tarhanayı ekleyip karıştırarak pişirin"
     ],
-    "sub_categories": [
-      "Çorbalar",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Çorbalar", "Vejetaryen"],
     "image_url": "https://glutensiztarifdefteri.com/wp-content/uploads/2024/06/glutensiz-tarhana-corbasi.webp",
     "difficulty": "Kolay",
-    "time_in_minutes": "20 dk",
-    "labels": [
-      "çorba",
-      "geleneksel",
-      "pratik"
-    ]
+    "time_in_minutes": 20,
+    "labels": ["çorba", "geleneksel", "pratik"],
+    "main_category": "Çorbalar"
   },
   {
     "id": 15,
@@ -1191,18 +1106,12 @@
       "Şekil verip tepsiye dizin",
       "180 derecede pişirin"
     ],
-    "sub_categories": [
-      "Hamur İşleri",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Hamur İşleri", "Vejetaryen"],
     "image_url": "https://www.glutensizhayat.com.tr/wp-content/uploads/2023/03/glutensiz-pogaca-1.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "45 dk",
-    "labels": [
-      "hamur işi",
-      "kahvaltı",
-      "pratik"
-    ]
+    "time_in_minutes": 45,
+    "labels": ["hamur işi", "kahvaltı", "pratik"],
+    "main_category": "Hamur İşleri"
   },
   {
     "id": 16,
@@ -1256,18 +1165,12 @@
       "Yufkayı yağlayın ve iç harcı koyarak sarın",
       "Fırında 180 derecede pişirin"
     ],
-    "sub_categories": [
-      "Hamur İşleri",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Hamur İşleri", "Vejetaryen"],
     "image_url": "https://i.lezzet.com.tr/images-xxlarge-recipe/ispanakli_tepsi_boregi-814acdf6-ff24-4e1a-899f-5033655ed6d8.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "50 dk",
-    "labels": [
-      "hamur işi",
-      "vejetaryen",
-      "sağlıklı"
-    ]
+    "time_in_minutes": 50,
+    "labels": ["hamur işi", "vejetaryen", "sağlıklı"],
+    "main_category": "Hamur İşleri"
   },
   {
     "id": 17,
@@ -1321,20 +1224,13 @@
       "Izgarada her iki tarafını 4-5 dakika pişirin",
       "Sıcak servis edin"
     ],
-    "sub_categories": [
-      "Deniz Ürünleri",
-      "Diyet Yemekler",
-      "Ana Yemek"
-    ],
+    "sub_categories": ["Deniz Ürünleri", "Diyet Yemekler", "Ana Yemek"],
     "image_url": "https://nizolive.com/wp-content/uploads/2024/03/Izgara-Somon-min.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "25 dk",
-    "labels": [
-      "balık",
-      "sağlıklı",
-      "protein"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 25,
+    "labels": ["balık", "sağlıklı", "protein"],
+    "öne_çıkar": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 18,
@@ -1402,19 +1298,13 @@
       "Karides ve doğranmış domatesi ekleyin",
       "10 dakika pişirip fırında 5 dakika kızartın"
     ],
-    "sub_categories": [
-      "Deniz Ürünleri",
-      "Ana Yemek"
-    ],
+    "sub_categories": ["Deniz Ürünleri", "Ana Yemek"],
     "image_url": "https://i.lezzet.com.tr/images-xxlarge-recipe/tereyagli_ve_sarimsakli_karides_guvec-cc4f8520-c0af-4f2c-a9cd-0ee55d65d8cc.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "30 dk",
-    "labels": [
-      "deniz ürünü",
-      "özel günler",
-      "protein"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 30,
+    "labels": ["deniz ürünü", "özel günler", "protein"],
+    "öne_çıkar": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 19,
@@ -1475,18 +1365,13 @@
       "Kuskusu haşlayın, sebzelerle karıştırın",
       "Baharatlarla tatlandırıp servis edin"
     ],
-    "sub_categories": [
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Vejetaryen"],
     "image_url": "https://www.ilkhaber-gazetesi.com/static/2024/09/11/sebzelikuskus1-1726061133-221-x750.jpeg",
     "difficulty": "Kolay",
-    "time_in_minutes": "25 dk",
-    "labels": [
-      "vejetaryen",
-      "pratik",
-      "sağlıklı"
-    ],
-    "popüler": true
+    "time_in_minutes": 25,
+    "labels": ["vejetaryen", "pratik", "sağlıklı"],
+    "popüler": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 20,
@@ -1554,20 +1439,14 @@
       "Diğer malzemelerle karıştırın",
       "Yağlı kağıt serili tepsiye dökün, fırında pişirin"
     ],
-    "sub_categories": [
-      "Vejetaryen",
-      "Diyet Yemekler"
-    ],
+    "sub_categories": ["Vejetaryen", "Diyet Yemekler"],
     "image_url": "https://www.macfit.com/wp-content/uploads/2025/03/shutterstock_2334459._imresizer-1024x683.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "40 dk",
-    "labels": [
-      "vejetaryen",
-      "fırın",
-      "sağlıklı"
-    ],
+    "time_in_minutes": 40,
+    "labels": ["vejetaryen", "fırın", "sağlıklı"],
     "öne_çıkar": true,
-    "popüler": true
+    "popüler": true,
+    "main_category": "Aperatifler"
   },
   {
     "id": 21,
@@ -1628,20 +1507,13 @@
       "Zeytinyağı ve limon suyu ekleyin",
       "Servis yapın"
     ],
-    "sub_categories": [
-      "Glutensiz",
-      "Vejetaryen",
-      "Salatalar"
-    ],
+    "sub_categories": ["Glutensiz", "Vejetaryen", "Salatalar"],
     "image_url": "https://i.pinimg.com/736x/6e/58/ed/6e58ed62cb280c172128d2e4c6da1f7c.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "20 dk",
-    "labels": [
-      "salata",
-      "glutensiz",
-      "sağlıklı"
-    ],
-    "öne_çıkar": true
+    "time_in_minutes": 20,
+    "labels": ["salata", "glutensiz", "sağlıklı"],
+    "öne_çıkar": true,
+    "main_category": "Salatalar"
   },
   {
     "id": 22,
@@ -1681,19 +1553,13 @@
       "Baharatlarla harmanlayıp tepsiye dizin",
       "Fırında çıtır olana kadar pişirin"
     ],
-    "sub_categories": [
-      "Glutensiz",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Glutensiz", "Vejetaryen"],
     "image_url": "https://dytnedaaydin.com/wp-content/uploads/bowl-of-zucchini-chips-on-a-yellow-background-1024x682.jpg.webp",
     "difficulty": "Kolay",
-    "time_in_minutes": "30 dk",
-    "labels": [
-      "atıştırmalık",
-      "sağlıklı",
-      "glutensiz"
-    ],
-    "popüler": true
+    "time_in_minutes": 30,
+    "labels": ["atıştırmalık", "sağlıklı", "glutensiz"],
+    "popüler": true,
+    "main_category": "Aperatifler"
   },
   {
     "id": 23,
@@ -1740,18 +1606,12 @@
       "Yağladığınız tavaya kepçeyle döküp iki tarafını pişirin",
       "İsteğe göre sebzeyle servis edin"
     ],
-    "sub_categories": [
-      "Glutensiz",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Glutensiz", "Vejetaryen"],
     "image_url": "https://www.theconsciousplantkitchen.com/wp-content/uploads/2023/12/Vegan-Chickpea-Pancakes-decorated-with-maple-syrup-and-blueberries.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "20 dk",
-    "labels": [
-      "kahvaltı",
-      "glutensiz",
-      "protein"
-    ]
+    "time_in_minutes": 20,
+    "labels": ["kahvaltı", "glutensiz", "protein"],
+    "main_category": "Kahvaltılıklar"
   },
   {
     "id": 24,
@@ -1798,18 +1658,13 @@
       "Avokadoyu dilimleyin ve tabağa alın",
       "Üzerine yumurtaları yerleştirin, zeytinyağı ve baharat ekleyin"
     ],
-    "sub_categories": [
-      "Kahvaltılıklar"
-    ],
+    "sub_categories": ["Kahvaltılıklar"],
     "image_url": "https://cdn.kisikatesakademi.com.tr/image-cache/cache/recipe_main_image_large/https---cdn.kisikatesakademi.com.tr/recipe-media/780cef75e59953334d14200a50d8e9501ef0c845.jpeg",
     "difficulty": "Kolay",
-    "time_in_minutes": "15 dk",
-    "labels": [
-      "kahvaltı",
-      "protein",
-      "sağlıklı"
-    ],
-    "popüler": true
+    "time_in_minutes": 15,
+    "labels": ["kahvaltı", "protein", "sağlıklı"],
+    "popüler": true,
+    "main_category": "Kahvaltılıklar"
   },
   {
     "id": 25,
@@ -1856,18 +1711,12 @@
       "Kıvam alınca tabağa alın, üzerine dilimlenmiş muz ve tarçın serpin",
       "İsteğe göre bal ekleyin"
     ],
-    "sub_categories": [
-      "Kahvaltılıklar",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Kahvaltılıklar", "Vejetaryen"],
     "image_url": "https://www.zulalyalcin.com/wp-content/uploads/2020/03/muz-tarcin-yulaf.png",
     "difficulty": "Kolay",
-    "time_in_minutes": "15 dk",
-    "labels": [
-      "kahvaltı",
-      "sağlıklı",
-      "enerji"
-    ]
+    "time_in_minutes": 15,
+    "labels": ["kahvaltı", "sağlıklı", "enerji"],
+    "main_category": "Kahvaltılıklar"
   },
   {
     "id": 26,
@@ -1921,20 +1770,13 @@
       "Izgarada birlikte pişirin",
       "Sıcak olarak servis edin"
     ],
-    "sub_categories": [
-      "Tavuk Yemekleri",
-      "Diyet Yemekler",
-      "Ana Yemek"
-    ],
+    "sub_categories": ["Tavuk Yemekleri", "Diyet Yemekler", "Ana Yemek"],
     "image_url": "https://d17wu0fn6x6rgz.cloudfront.net/img/w/tarif/ogt/sebze-esliginde-tavuk-izgara.webp",
     "difficulty": "Kolay",
-    "time_in_minutes": "30 dk",
-    "labels": [
-      "protein",
-      "sağlıklı",
-      "diyet"
-    ],
-    "popüler": true
+    "time_in_minutes": 30,
+    "labels": ["protein", "sağlıklı", "diyet"],
+    "popüler": true,
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 27,
@@ -1982,13 +1824,10 @@
     ],
     "image_url": "https://cafefernando.com/images/semizotusalatasi.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "15 dk",
-    "labels": [
-      "salata",
-      "sağlıklı",
-      "yaz"
-    ],
-    "popüler": true
+    "time_in_minutes": 15,
+    "labels": ["salata", "sağlıklı", "yaz"],
+    "popüler": true,
+    "main_category": "Salatalar"
   },
   {
     "id": 28,
@@ -2035,19 +1874,12 @@
       "Sarımsağı zeytinyağında kavurun",
       "Kabakları ekleyip kısa süre soteleyin"
     ],
-    "sub_categories": [
-      "Diyet Yemekler",
-      "Glutensiz",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Diyet Yemekler", "Glutensiz", "Vejetaryen"],
     "image_url": "https://www.macfit.com/wp-content/uploads/2025/02/shutterstock_1323558962-1024x683.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "20 dk",
-    "labels": [
-      "diyet",
-      "glutensiz",
-      "düşük karbonhidrat"
-    ]
+    "time_in_minutes": 20,
+    "labels": ["diyet", "glutensiz", "düşük karbonhidrat"],
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 29,
@@ -2137,19 +1969,12 @@
       "Sarımsak, doğranmış biberler ve taze soğanı ekleyip birkaç dakika kavurun.",
       "Susam yağını ekleyin, karıştırıp sıcak servis yapın."
     ],
-    "sub_categories": [
-      "Ana Yemekler",
-      "Tavuk Yemekleri",
-      "Dünya Mutfağı"
-    ],
+    "sub_categories": ["Ana Yemekler", "Tavuk Yemekleri", "Dünya Mutfağı"],
     "image_url": "https://ideacdn.net/idea/gu/03/myassets/blogs/blog-41.jpg?revision=1727160352",
     "difficulty": "Orta",
-    "time_in_minutes": "35 dk",
-    "labels": [
-      "dünya mutfağı",
-      "protein",
-      "wok"
-    ]
+    "time_in_minutes": 35,
+    "labels": ["dünya mutfağı", "protein", "wok"],
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 30,
@@ -2225,19 +2050,12 @@
       "Üzerine domates sosunu sürün, kaşar ve dilediğiniz malzemeleri yerleştirin.",
       "Önceden ısıtılmış 200°C fırında 15-20 dakika pişirin."
     ],
-    "sub_categories": [
-      "Hamur İşleri",
-      "Ana Yemekler",
-      "Dünya Mutfağı"
-    ],
+    "sub_categories": ["Hamur İşleri", "Ana Yemekler", "Dünya Mutfağı"],
     "image_url": "https://d2lswn7b0fl4u2.cloudfront.net/photos/pg-neapolitan-pizza-1627471711.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "60 dk",
-    "labels": [
-      "hamur işi",
-      "dünya mutfağı",
-      "aile"
-    ]
+    "time_in_minutes": 60,
+    "labels": ["hamur işi", "dünya mutfağı", "aile"],
+    "main_category": "Hamur İşleri"
   },
   {
     "id": 31,
@@ -2278,19 +2096,12 @@
       "Üzerine yumurta sarısı sürüp çörek otu serpin.",
       "200°C fırında altın rengini alana kadar pişirin."
     ],
-    "sub_categories": [
-      "Atıştırmalıklar",
-      "Hamur İşleri",
-      "Vejetaryen"
-    ],
+    "sub_categories": ["Atıştırmalıklar", "Hamur İşleri", "Vejetaryen"],
     "image_url": "https://www.kayaciftligi.com.tr/wp-content/uploads/tarifler-milfoy-cubuklari-image-1.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "25 dk",
-    "labels": [
-      "atıştırmalık",
-      "pratik",
-      "çay yanı"
-    ]
+    "time_in_minutes": 25,
+    "labels": ["atıştırmalık", "pratik", "çay yanı"],
+    "main_category": "Hamur İşleri"
   },
   {
     "id": 32,
@@ -2351,19 +2162,12 @@
       "Kıvamına göre az miktarda su veya zeytinyağı ekleyebilirsiniz.",
       "Servis tabağına alın, üzerine zeytinyağı gezdirin ve isteğe göre pul biber serpin."
     ],
-    "sub_categories": [
-      "Atıştırmalıklar",
-      "Vejetaryen",
-      "Glutensiz"
-    ],
+    "sub_categories": ["Atıştırmalıklar", "Vejetaryen", "Glutensiz"],
     "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Hummus_from_The_Nile.jpg/1200px-Hummus_from_The_Nile.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "15 dk",
-    "labels": [
-      "vegan",
-      "protein",
-      "mezeler"
-    ]
+    "time_in_minutes": 15,
+    "labels": ["vegan", "protein", "mezeler"],
+    "main_category": "Mezeler"
   },
   {
     "id": 33,
@@ -2469,12 +2273,9 @@
     ],
     "image_url": "https://i.lezzet.com.tr/images-xxlarge-recipe/tarcinli-kirmizi-fasulye-e0ea51c4-dbbb-4d97-a812-55dee1841aaf.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "40 dk",
-    "labels": [
-      "dünya mutfağı",
-      "protein",
-      "vejetaryen"
-    ]
+    "time_in_minutes": 40,
+    "labels": ["dünya mutfağı", "protein", "vejetaryen"],
+    "main_category": "Ana Yemekler"
   },
   {
     "id": 34,
@@ -2514,19 +2315,12 @@
       "Pürüzsüz olana kadar karıştırın.",
       "Soğuk servis yapın."
     ],
-    "sub_categories": [
-      "İçecekler",
-      "Vejetaryen",
-      "Diyet Yemekler"
-    ],
+    "sub_categories": ["İçecekler", "Vejetaryen", "Diyet Yemekler"],
     "image_url": "https://www.carrefoursa.com/blog/uniq/2020/08/cilekli-smothie-min.jpg",
     "difficulty": "Kolay",
-    "time_in_minutes": "5 dk",
-    "labels": [
-      "içecek",
-      "enerji",
-      "yaz"
-    ]
+    "time_in_minutes": 5,
+    "labels": ["içecek", "enerji", "yaz"],
+    "main_category": "İçecekler"
   },
   {
     "id": 35,
@@ -2632,12 +2426,9 @@
     ],
     "image_url": "https://i.lezzet.com.tr/images-xxlarge-recipe/barbunya_pilaki-d945335b-cdee-4adb-bacd-0cd5cb11e5c7.jpg",
     "difficulty": "Orta",
-    "time_in_minutes": "60 dk",
-    "labels": [
-      "zeytinyağlı",
-      "geleneksel",
-      "vejetaryen"
-    ]
+    "time_in_minutes": 60,
+    "labels": ["zeytinyağlı", "geleneksel", "vejetaryen"],
+    "main_category": "Zeytinyağlılar"
   },
   {
     "id": 36,
@@ -2693,17 +2484,11 @@
       "Steakleri her yüzünü 2-4 dakika arası (istenilen pişme derecesine göre) mühürleyin.",
       "Piştikten sonra 5 dakika dinlendirin ve sıcak servis yapın."
     ],
-    "sub_categories": [
-      "Ana Yemekler",
-      "Et Yemekleri"
-    ],
+    "sub_categories": ["Ana Yemekler", "Et Yemekleri"],
     "image_url": "https://i0.wp.com/evdesefvar.arzum.com.tr/wp-content/uploads/2023/08/2b0f4196-f1f7-4c9c-8aa8-109e22b069f3.jpg?fit=600%2C528&ssl=1",
     "difficulty": "Orta",
-    "time_in_minutes": "20 dk",
-    "labels": [
-      "et",
-      "ızgara",
-      "protein"
-    ]
+    "time_in_minutes": 20,
+    "labels": ["et", "ızgara", "protein"],
+    "main_category": "Ana Yemekler"
   }
 ]

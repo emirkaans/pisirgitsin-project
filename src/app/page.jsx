@@ -233,7 +233,7 @@ export default function Home() {
                       {recipe.name}
                     </h3>
                     <div className="flex items-center text-sm text-gray-500">
-                      <span className="mr-3">⏱ {recipe.time_in_minutes}</span>
+                      <span className="mr-3">⏱ {recipe.time_in_minutes} dk</span>
                       <span>💪 {recipe.difficulty}</span>
                     </div>
                   </div>

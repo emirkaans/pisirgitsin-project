@@ -224,7 +224,7 @@ const RecipeDetail = () => {
                   <div className="flex items-center gap-1">
                     ⏱{" "}
                     <span>
-                      {recipe.time_in_minutes || "Süre belirtilmemiş"}
+                      {recipe.time_in_minutes + " dk" || "Süre belirtilmemiş"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
