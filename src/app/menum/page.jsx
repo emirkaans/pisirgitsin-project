@@ -22,7 +22,6 @@ const MenuPage = () => {
   const [availableIngredients, setAvailableIngredients] = useState([]);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const handleCopyToClipboard = () => {
-    console.log("kopysdkfjbj");
     const neededIngredients = getNeededIngredients();
     if (neededIngredients.length === 0) {
       toast.info("Kopyalanacak eksik malzeme bulunmuyor.");
