@@ -222,10 +222,14 @@ const RecipeDetail = () => {
                 </h1>{" "}
                 <div className="flex gap-4 text-sm text-gray-500 mt-1">
                   <div className="flex items-center gap-1">
-                    ⏱ <span>{recipe.time_in_minutes || "Süre belirtilmemiş"}</span>
+                    ⏱{" "}
+                    <span>
+                      {recipe.time_in_minutes || "Süre belirtilmemiş"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    💪 <span>{recipe.difficulty || "Zorluk belirtilmemiş"}</span>
+                    💪{" "}
+                    <span>{recipe.difficulty || "Zorluk belirtilmemiş"}</span>
                   </div>
                 </div>
                 <div className="flex items-center ml-auto  gap-2">
@@ -325,13 +329,13 @@ const RecipeDetail = () => {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {recipe.labels?.map((etiket, i) => (
+                {recipe.labels?.map((label, i) => (
                   <Link
-                    href={`/etiketler/${encodeURIComponent(etiket)}`}
+                    href={`/etiketler/${encodeURIComponent(label)}`}
                     key={i}
                     className="text-xs px-2 py-1 border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition"
                   >
-                    #{etiket}
+                    #{label}
                   </Link>
                 ))}
               </div>
@@ -376,10 +380,11 @@ const RecipeDetail = () => {
                 Malzemeler
               </h2>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {recipe.ingredients.map((malzeme, index) => (
+                {recipe.ingredients.map((ingredient, index) => (
                   <li key={index} className="flex items-center text-gray-700">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    {malzeme}
+                    {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
+                    {ingredient?.ingredient}
                   </li>
                 ))}
               </ul>

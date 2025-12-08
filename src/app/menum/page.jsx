@@ -29,8 +29,6 @@ const MenuPage = () => {
       return;
     }
 
-    console.log(neededIngredients, "skdjfgjg");
-
     // Sadece eksik malzemeleri kopyala
     const textToCopy = neededIngredients.join("\n");
     navigator.clipboard.writeText(textToCopy);
@@ -84,7 +82,13 @@ const MenuPage = () => {
 
     selectedRecipesData.forEach((recipe) => {
       recipe.ingredients.forEach((ingredient) => {
-        const match = ingredient.match(
+        const fullIngredient =
+          ingredient?.amount?.value +
+          " " +
+          ingredient?.amount?.unit +
+          " " +
+          ingredient?.ingredient;
+        const match = fullIngredient.match(
           /^(\d+)\s+((?:adet|su bardağı|yemek kaşığı|çay kaşığı|gram)\s+)?(.+)$/
         );
         if (match) {
@@ -112,6 +116,7 @@ const MenuPage = () => {
       }
     );
 
+    // console.log(ingredientsWithQuantities);
     setShoppingList(ingredientsWithQuantities);
     setShowShoppingList(true);
   };

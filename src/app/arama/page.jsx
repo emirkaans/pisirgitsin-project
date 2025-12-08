@@ -21,8 +21,8 @@ const SearchResults = () => {
       if (recipe.name.toLowerCase().includes(searchTerm)) return true;
 
       if (
-        recipe.ingredients.some((malzeme) =>
-          malzeme.toLowerCase().includes(searchTerm)
+        recipe.ingredients.some((ingredient) =>
+          ingredient?.ingredient.toLowerCase().includes(searchTerm)
         )
       )
         return true;

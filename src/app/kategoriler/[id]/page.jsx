@@ -78,7 +78,7 @@ const CategoryRecipes = () => {
   };
 
   const handleLike = (recipeId, e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (!isUserLoggedIn) {
       alert("Beğenmek için giriş yapmalısınız.");
       return;
@@ -181,9 +181,15 @@ const CategoryRecipes = () => {
                         Malzemeler:
                       </h3>
                       <ul className="text-sm text-gray-600 list-disc list-inside">
-                        {recipe.ingredients.slice(0, 3).map((malzeme, index) => (
-                          <li key={index}>{malzeme}</li>
-                        ))}
+                        {recipe.ingredients
+                          .slice(0, 3)
+                          .map((ingredient, index) => (
+                            <li key={index}>
+                              {ingredient?.amount?.value}{" "}
+                              {ingredient?.amount?.unit}{" "}
+                              {ingredient?.ingredient}
+                            </li>
+                          ))}
                         {recipe.ingredients.length > 3 && (
                           <li className="text-gray-500">
                             ve {recipe.ingredients.length - 3} malzeme daha...

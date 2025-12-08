@@ -34,7 +34,7 @@ function ResultsContent() {
   };
 
   const handleLike = (recipeId, e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (!isUserLoggedIn) {
       alert("Beğenmek için giriş yapmalısınız.");
       return;
@@ -54,7 +54,7 @@ function ResultsContent() {
         /^\d+(?:[.,]\d+)?\s*(adet|su bardağı|çay bardağı|yemek kaşığı|tatlı kaşığı|çay kaşığı|gram|kg|ml|lt|dilim|demet|bağ|tutam|fincan|kâse|kase|parça|dilim|küp|küçük|orta|iri|büyük|küçük boy|orta boy|iri boy|küçük boyda|orta boyda|iri boyda|küçük boyutlu|orta boyutlu|iri boyutlu|küçük parça|orta parça|iri parça|küçük doğranmış|orta doğranmış|iri doğranmış|küçük halka|orta halka|iri halka|küçük küp|orta küp|iri küp|küçük dilim|orta dilim|iri dilim|küçük parçalar|orta parçalar|iri parçalar|küçük doğranmış|orta doğranmış|iri doğranmış|küçük halkalar|orta halkalar|iri halkalar|küçük küpler|orta küpler|iri küpler|küçük dilimler|orta dilimler|iri dilimler)\s*/gi,
         ""
       )
-      .replace(/^\d+(?:[.,]\d+)?\s*/, "") 
+      .replace(/^\d+(?:[.,]\d+)?\s*/, "")
       .trim();
   };
 
@@ -68,10 +68,12 @@ function ResultsContent() {
 
         const filtered = recipes
           .map((recipe) => {
-            const missingIngredients = recipe.ingredients.filter((ing) => {
-              const ingredient = ing.toLowerCase();
-              return !searchTerms.some((term) => ingredient.includes(term));
-            });
+            const missingIngredients = recipe.ingredients.filter(
+              (ingredient) => {
+                ingredient = ingredient?.ingredient.toLowerCase();
+                return !searchTerms.some((term) => ingredient.includes(term));
+              }
+            );
 
             return {
               ...recipe,
@@ -79,8 +81,8 @@ function ResultsContent() {
             };
           })
           .filter((recipe) => {
-            const recipeIngredients = recipe.ingredients.map((ing) =>
-              ing.toLowerCase()
+            const recipeIngredients = recipe.ingredients.map((ingredient) =>
+              ingredient?.ingredient.toLowerCase()
             );
             return searchTerms.some((term) =>
               recipeIngredients.some((ing) => ing.includes(term))
@@ -200,8 +202,11 @@ function ResultsContent() {
                       Malzemeler:
                     </h3>
                     <ul className="text-sm text-gray-600 list-disc list-inside">
-                      {recipe.ingredients.map((malzeme, index) => (
-                        <li key={index}>{malzeme}</li>
+                      {recipe.ingredients.map((ingredient, index) => (
+                        <li key={index}>
+                          {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
+                          {ingredient?.ingredient}
+                        </li>
                       ))}
                     </ul>
                   </div>
