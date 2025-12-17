@@ -20,9 +20,9 @@ const ListeSayfasi = () => {
       case "yeni-tarifler":
         return [...recipes].sort((a, b) => b.id - a.id).slice(0, 6);
       case "ozel-tarifler":
-        return recipes.filter((recipe) => recipe.öne_çıkar);
+        return recipes.filter((recipe) => recipe.is_featured);
       case "populer-tarifler":
-        return recipes.filter((recipe) => recipe.popüler);
+        return recipes.filter((recipe) => recipe.is_popular);
       default:
         return [];
     }

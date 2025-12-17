@@ -20,7 +20,7 @@ export default function Home() {
     { id: 4, name: "Çorbalar", image: "/assets/soups.webp" },
   ];
 
-  const popularRecipes = recipes.filter((recipe) => recipe.popüler).slice(0, 3);
+  const popularRecipes = recipes.filter((recipe) => recipe.is_popular).slice(0, 3);
 
   const heroSlides = [
     {

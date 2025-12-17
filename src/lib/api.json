@@ -1,9 +1,10 @@
-[
-  {
+[{
     "id": 1,
+    "views_count": 38,
+    "likes_count": 17,
+    "saves_count": 6,
     "name": "Menemen",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "yumurta",
         "amount": {
           "unit": "adet",
@@ -67,9 +68,11 @@
   },
   {
     "id": 2,
+    "views_count": 36,
+    "likes_count": 21,
+    "saves_count": 10,
     "name": "Mercimek Çorbası",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kırmızı mercimek",
         "amount": {
           "unit": "su bardağı",
@@ -133,9 +136,11 @@
   },
   {
     "id": 3,
+    "views_count": 34,
+    "likes_count": 15,
+    "saves_count": 9,
     "name": "Fırında Tavuk",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "tavuk but",
         "amount": {
           "unit": "adet",
@@ -203,14 +208,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 60,
     "labels": ["fırın", "tavuk", "pratik", "aile"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 4,
+    "views_count": 15,
+    "likes_count": 6,
+    "saves_count": 4,
     "name": "Bisküvili Pasta",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "petibör bisküvi",
         "amount": {
           "unit": "paket",
@@ -268,9 +275,11 @@
   },
   {
     "id": 5,
+    "views_count": 13,
+    "likes_count": 6,
+    "saves_count": 4,
     "name": "Falafel",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "haşlanmış nohut",
         "amount": {
           "unit": "su bardağı",
@@ -352,14 +361,16 @@
     "difficulty": "Orta",
     "time_in_minutes": 40,
     "labels": ["vegan", "glutensiz", "atıştırmalık", "baharatlı"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Aperatifler"
   },
   {
     "id": 6,
+    "views_count": 20,
+    "likes_count": 8,
+    "saves_count": 4,
     "name": "İstiridye Mantarı Sote",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "istiridye mantarı",
         "amount": {
           "unit": "gram",
@@ -424,9 +435,11 @@
   },
   {
     "id": 7,
+    "views_count": 26,
+    "likes_count": 16,
+    "saves_count": 11,
     "name": "Karnıyarık",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "patlıcan",
         "amount": {
           "unit": "adet",
@@ -500,14 +513,16 @@
     "difficulty": "Orta",
     "time_in_minutes": 55,
     "labels": ["geleneksel", "fırın", "doyurucu"],
-    "popüler": true,
+    "is_popular": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 8,
+    "views_count": 16,
+    "likes_count": 6,
+    "saves_count": 3,
     "name": "Zeytinyağlı Yaprak Sarma",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "asma yaprağı",
         "amount": {
           "unit": "gram",
@@ -581,14 +596,16 @@
     "difficulty": "Orta",
     "time_in_minutes": 70,
     "labels": ["zeytinyağlı", "vejetaryen", "geleneksel"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Zeytinyağlılar"
   },
   {
     "id": 9,
+    "views_count": 26,
+    "likes_count": 8,
+    "saves_count": 4,
     "name": "Mercimek Köftesi",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kırmızı mercimek",
         "amount": {
           "unit": "su bardağı",
@@ -689,9 +706,11 @@
   },
   {
     "id": 10,
+    "views_count": 24,
+    "likes_count": 11,
+    "saves_count": 6,
     "name": "Kuru Fasulye",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kuru fasulye",
         "amount": {
           "unit": "su bardağı",
@@ -757,9 +776,11 @@
   },
   {
     "id": 11,
+    "views_count": 38,
+    "likes_count": 15,
+    "saves_count": 10,
     "name": "Çikolatalı Kurabiye",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "tereyağı",
         "amount": {
           "unit": "gram",
@@ -814,15 +835,17 @@
     "difficulty": "Kolay",
     "time_in_minutes": 30,
     "labels": ["tatlı", "çocuklar için", "pratik"],
-    "öne_çıkar": true,
-    "popüler": true,
+    "is_featured": true,
+    "is_popular": true,
     "main_category": "Tatlılar"
   },
   {
     "id": 12,
+    "views_count": 24,
+    "likes_count": 12,
+    "saves_count": 6,
     "name": "Patlıcan Kebabı",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "patlıcan",
         "amount": {
           "unit": "adet",
@@ -898,14 +921,16 @@
     "difficulty": "Orta",
     "time_in_minutes": 60,
     "labels": ["geleneksel", "fırın", "doyurucu"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 13,
+    "views_count": 23,
+    "likes_count": 8,
+    "saves_count": 4,
     "name": "Profiterol",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "su",
         "amount": {
           "unit": "su bardağı",
@@ -999,14 +1024,16 @@
     "difficulty": "Zor",
     "time_in_minutes": 90,
     "labels": ["tatlı", "özel günler", "çikolatalı"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Tatlılar"
   },
   {
     "id": 14,
+    "views_count": 41,
+    "likes_count": 25,
+    "saves_count": 15,
     "name": "Tarhana Çorbası",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "tarhana",
         "amount": {
           "unit": "yemek kaşığı",
@@ -1056,9 +1083,11 @@
   },
   {
     "id": 15,
+    "views_count": 14,
+    "likes_count": 7,
+    "saves_count": 3,
     "name": "Poğaça",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "yoğurt",
         "amount": {
           "unit": "su bardağı",
@@ -1115,9 +1144,11 @@
   },
   {
     "id": 16,
+    "views_count": 12,
+    "likes_count": 4,
+    "saves_count": 3,
     "name": "Ispanaklı Börek",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "yufka",
         "amount": {
           "unit": "adet",
@@ -1174,9 +1205,11 @@
   },
   {
     "id": 17,
+    "views_count": 18,
+    "likes_count": 10,
+    "saves_count": 6,
     "name": "Izgara Somon",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "somon fileto",
         "amount": {
           "unit": "dilim",
@@ -1229,14 +1262,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 25,
     "labels": ["balık", "sağlıklı", "protein"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 18,
+    "views_count": 16,
+    "likes_count": 6,
+    "saves_count": 5,
     "name": "Karides Güveç",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "ayıklanmış karides",
         "amount": {
           "unit": "gram",
@@ -1303,14 +1338,16 @@
     "difficulty": "Orta",
     "time_in_minutes": 30,
     "labels": ["deniz ürünü", "özel günler", "protein"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 19,
+    "views_count": 31,
+    "likes_count": 19,
+    "saves_count": 8,
     "name": "Sebzeli Kuskus",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kuskus",
         "amount": {
           "unit": "su bardağı",
@@ -1370,14 +1407,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 25,
     "labels": ["vejetaryen", "pratik", "sağlıklı"],
-    "popüler": true,
+    "is_popular": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 20,
+    "views_count": 33,
+    "likes_count": 16,
+    "saves_count": 8,
     "name": "Fırında Sebzeli Mücver",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kabak",
         "amount": {
           "unit": "adet",
@@ -1444,15 +1483,17 @@
     "difficulty": "Kolay",
     "time_in_minutes": 40,
     "labels": ["vejetaryen", "fırın", "sağlıklı"],
-    "öne_çıkar": true,
-    "popüler": true,
+    "is_featured": true,
+    "is_popular": true,
     "main_category": "Aperatifler"
   },
   {
     "id": 21,
+    "views_count": 31,
+    "likes_count": 10,
+    "saves_count": 6,
     "name": "Kinoa Salatası",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "haşlanmış kinoa",
         "amount": {
           "unit": "su bardağı",
@@ -1512,14 +1553,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 20,
     "labels": ["salata", "glutensiz", "sağlıklı"],
-    "öne_çıkar": true,
+    "is_featured": true,
     "main_category": "Salatalar"
   },
   {
     "id": 22,
+    "views_count": 37,
+    "likes_count": 19,
+    "saves_count": 7,
     "name": "Fırında Kabak Cipsi",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kabak",
         "amount": {
           "unit": "adet",
@@ -1558,14 +1601,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 30,
     "labels": ["atıştırmalık", "sağlıklı", "glutensiz"],
-    "popüler": true,
+    "is_popular": true,
     "main_category": "Aperatifler"
   },
   {
     "id": 23,
+    "views_count": 35,
+    "likes_count": 13,
+    "saves_count": 6,
     "name": "Nohut Unlu Krep",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "nohut unu",
         "amount": {
           "unit": "su bardağı",
@@ -1615,9 +1660,11 @@
   },
   {
     "id": 24,
+    "views_count": 45,
+    "likes_count": 26,
+    "saves_count": 15,
     "name": "Avokadolu Yumurta",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "avokado",
         "amount": {
           "unit": "adet",
@@ -1663,14 +1710,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 15,
     "labels": ["kahvaltı", "protein", "sağlıklı"],
-    "popüler": true,
+    "is_popular": true,
     "main_category": "Kahvaltılıklar"
   },
   {
     "id": 25,
+    "views_count": 39,
+    "likes_count": 17,
+    "saves_count": 11,
     "name": "Yulaf Lapası",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "süt",
         "amount": {
           "unit": "su bardağı",
@@ -1720,9 +1769,11 @@
   },
   {
     "id": 26,
+    "views_count": 46,
+    "likes_count": 28,
+    "saves_count": 13,
     "name": "Izgara Sebzeli Tavuk",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "tavuk göğsü",
         "amount": {
           "unit": "gram",
@@ -1775,14 +1826,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 30,
     "labels": ["protein", "sağlıklı", "diyet"],
-    "popüler": true,
+    "is_popular": true,
     "main_category": "Ana Yemekler"
   },
   {
     "id": 27,
+    "views_count": 27,
+    "likes_count": 15,
+    "saves_count": 8,
     "name": "Yoğurtlu Semizotu Salatası",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "semizotu",
         "amount": {
           "unit": "bağ",
@@ -1826,14 +1879,16 @@
     "difficulty": "Kolay",
     "time_in_minutes": 15,
     "labels": ["salata", "sağlıklı", "yaz"],
-    "popüler": true,
+    "is_popular": true,
     "main_category": "Salatalar"
   },
   {
     "id": 28,
+    "views_count": 21,
+    "likes_count": 8,
+    "saves_count": 6,
     "name": "Kabak Spagetti",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "kabak",
         "amount": {
           "unit": "adet",
@@ -1883,9 +1938,11 @@
   },
   {
     "id": 29,
+    "views_count": 15,
+    "likes_count": 7,
+    "saves_count": 4,
     "name": "Çin Usulü Tavuk",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "tavuk göğsü",
         "amount": {
           "unit": "gram",
@@ -1978,9 +2035,11 @@
   },
   {
     "id": 30,
+    "views_count": 13,
+    "likes_count": 4,
+    "saves_count": 3,
     "name": "Ev Yapımı Pizza",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "un",
         "amount": {
           "unit": "su bardağı",
@@ -2059,9 +2118,11 @@
   },
   {
     "id": 31,
+    "views_count": 23,
+    "likes_count": 13,
+    "saves_count": 7,
     "name": "Peynirli Milföy Çubukları",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "milföy hamuru",
         "amount": {
           "unit": "paket",
@@ -2105,9 +2166,11 @@
   },
   {
     "id": 32,
+    "views_count": 30,
+    "likes_count": 14,
+    "saves_count": 9,
     "name": "Humus",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "haşlanmış nohut",
         "amount": {
           "unit": "su bardağı",
@@ -2171,9 +2234,11 @@
   },
   {
     "id": 33,
+    "views_count": 24,
+    "likes_count": 7,
+    "saves_count": 4,
     "name": "Meksika Fasulyesi",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "haşlanmış kırmızı fasulye",
         "amount": {
           "unit": "su bardağı",
@@ -2279,9 +2344,11 @@
   },
   {
     "id": 34,
+    "views_count": 34,
+    "likes_count": 17,
+    "saves_count": 9,
     "name": "Çilekli Smoothie",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "süt",
         "amount": {
           "unit": "su bardağı",
@@ -2324,9 +2391,11 @@
   },
   {
     "id": 35,
+    "views_count": 24,
+    "likes_count": 7,
+    "saves_count": 5,
     "name": "Barbunya Pilaki",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "haşlanmış barbunya",
         "amount": {
           "unit": "su bardağı",
@@ -2432,9 +2501,11 @@
   },
   {
     "id": 36,
+    "views_count": 34,
+    "likes_count": 18,
+    "saves_count": 8,
     "name": "Izgara Steak",
-    "ingredients": [
-      {
+    "ingredients": [{
         "ingredient": "dana bonfile",
         "amount": {
           "unit": "adet",
