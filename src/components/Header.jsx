@@ -81,6 +81,13 @@ const Header = () => {
             </Link>
 
             <Link
+              href="/oneri"
+              className="text-gray-700 h-11 hover:text-gray-900 px-3 py-2 rounded-md text-sm lg:text-base font-medium hover:bg-gray-100"
+            >
+              Öneri
+            </Link>
+
+            <Link
               href="/tarif-ara"
               className="text-gray-700 h-11 hover:text-gray-900 px-3 py-2 rounded-md text-sm lg:text-base font-medium hover:bg-gray-100"
             >

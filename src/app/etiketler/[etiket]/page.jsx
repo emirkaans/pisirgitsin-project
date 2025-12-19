@@ -2,13 +2,32 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import recipes from "@/lib/api.json";
+import { supabase } from "@/lib/supabase";
+// import recipes from "@/lib/api.json";
 import { IconArrowLeft } from "@tabler/icons-react";
 
 const EtiketSayfasi = () => {
   const params = useParams();
   const router = useRouter();
   const etiket = decodeURIComponent(params.etiket);
+  const [recipes, setRecipes] = useState([]);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      const { data, error } = await supabase
+        .from("recipe")
+        .select("*")
+
+      if (error) {
+        setFetchError(error.message || "Veri alınamadı");
+      } else {
+        setRecipes(Array.isArray(data) ? data : []);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
 
   const etiketliTarifler = recipes.filter((recipe) =>
     recipe.labels.includes(etiket)

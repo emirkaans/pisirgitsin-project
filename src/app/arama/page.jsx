@@ -2,7 +2,8 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import recipes from "@/lib/api.json";
+import { supabase } from "@/lib/supabase";
+// import recipes from "@/lib/api.json";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useState, useEffect, Suspense } from "react";
 
@@ -12,6 +13,24 @@ const SearchResults = () => {
   const query = searchParams.get("q") || "";
   const [isLoading, setIsLoading] = useState(true);
   const [searchResults, setSearchResults] = useState([]);
+  const [recipes, setRecipes] = useState([]);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      const { data, error } = await supabase
+        .from("recipe")
+        .select("*")
+
+      if (error) {
+        setFetchError(error.message || "Veri alınamadı");
+      } else {
+        setRecipes(Array.isArray(data) ? data : []);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
 
   const searchRecipes = (query) => {
     if (!query) return [];

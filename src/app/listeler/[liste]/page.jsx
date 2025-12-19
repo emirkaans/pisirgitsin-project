@@ -2,7 +2,8 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import recipes from "@/lib/api.json";
+// import recipes from "@/lib/api.json";
+import { supabase } from "@/lib/supabase";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 
@@ -12,6 +13,24 @@ const ListeSayfasi = () => {
   const [listedRecipes, setListedRecipes] = useState([]);
   const router = useRouter();
   const liste = decodeURIComponent(params.liste);
+  const [recipes, setRecipes] = useState([]);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      const { data, error } = await supabase
+        .from("recipe")
+        .select("*")
+
+      if (error) {
+        setFetchError(error.message || "Veri alınamadı");
+      } else {
+        setRecipes(Array.isArray(data) ? data : []);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
 
   const getListedRecipes = () => {
     switch (liste) {

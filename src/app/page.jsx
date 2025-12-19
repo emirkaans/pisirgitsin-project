@@ -1,13 +1,14 @@
 // src/app/page.js
 "use client";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import HeroSlides from "@/components/HeroSlides";
-import recipes from "@/lib/api.json";
+// import recipes from "@/lib/api.json";
 
 export default function Home() {
   const { isUserLoggedIn, user } = useAuth();
@@ -20,7 +21,26 @@ export default function Home() {
     { id: 4, name: "Çorbalar", image: "/assets/soups.webp" },
   ];
 
-  const popularRecipes = recipes.filter((recipe) => recipe.is_popular).slice(0, 3);
+  const [recipes, setRecipes] = useState([]);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      const { data, error } = await supabase
+        .from("recipe")
+        .select("*")
+        .eq("is_popular", true)
+        .limit(3);
+
+      if (error) {
+        setFetchError(error.message || "Veri alınamadı");
+      } else {
+        setRecipes(Array.isArray(data) ? data : []);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
 
   const heroSlides = [
     {
@@ -214,7 +234,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularRecipes.map((recipe) => {
+            {recipes.map((recipe) => {
               return (
                 <Link
                   key={recipe.id}
@@ -233,7 +253,9 @@ export default function Home() {
                       {recipe.name}
                     </h3>
                     <div className="flex items-center text-sm text-gray-500">
-                      <span className="mr-3">⏱ {recipe.time_in_minutes} dk</span>
+                      <span className="mr-3">
+                        ⏱ {recipe.time_in_minutes} dk
+                      </span>
                       <span>💪 {recipe.difficulty}</span>
                     </div>
                   </div>
