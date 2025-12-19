@@ -1,17 +1,19 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const RegisterPage = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    fullName: "",
+    full_name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -23,18 +25,29 @@ const RegisterPage = () => {
     setLoading(true);
     setError("");
 
-    // Şifre kontrolü
     if (formData.password !== formData.confirmPassword) {
       setError("Şifreler eşleşmiyor!");
       setLoading(false);
       return;
     }
 
-    // Fake kayıt işlemi
-    setTimeout(() => {
-      setIsSuccess(true);
+    try {
+      const data = await signUp({
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.full_name,
+      });
+
+      if (data) {
+        setIsSuccess(true);
+        setLoading(false);
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(error);
+      setError("Kayıt oluşturulamadı!");
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (e) => {
@@ -71,10 +84,7 @@ const RegisterPage = () => {
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Kaydınız Başarıyla Oluşturuldu!
                 </h2>
-                <p className="text-gray-600 text-center mb-6">
-                  E-posta adresinize gönderilen doğrulama linkine tıklayarak
-                  kaydınızı tamamlayabilirsiniz.
-                </p>
+
                 <Link
                   href="/giris-yap"
                   className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
@@ -104,22 +114,21 @@ const RegisterPage = () => {
               <div className="flex flex-col gap-y-1">
                 <label
                   className="font-semibold text-sm text-gray-600 pb-1 block"
-                  htmlFor="fullName"
+                  htmlFor="full_name"
                 >
                   Ad Soyad
                 </label>
                 <input
                   className="border rounded-lg px-3 py-2    text-sm w-full"
                   type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
+                  id="full_name"
+                  name="full_name"
+                  value={formData.full_name}
                   onChange={handleChange}
                   required
                 />
               </div>
               <div className="flex flex-col gap-y-1">
-                {" "}
                 <label
                   className="font-semibold text-sm text-gray-600 pb-1 block"
                   htmlFor="email"
@@ -134,10 +143,9 @@ const RegisterPage = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                />{" "}
+                />
               </div>
               <div className="flex flex-col gap-y-1">
-                {" "}
                 <label
                   className="font-semibold text-sm text-gray-600 pb-1 block"
                   htmlFor="password"
@@ -165,10 +173,9 @@ const RegisterPage = () => {
                       <IconEyeOff strokeWidth={1.5} className="text-gray-700" />
                     )}
                   </button>
-                </div>{" "}
+                </div>
               </div>
               <div className="flex flex-col gap-y-1">
-                {" "}
                 <label
                   className="font-semibold text-sm text-gray-600 pb-1 block"
                   htmlFor="confirmPassword"
@@ -196,7 +203,7 @@ const RegisterPage = () => {
                       <IconEyeOff strokeWidth={1.5} className="text-gray-700" />
                     )}
                   </button>
-                </div>{" "}
+                </div>
               </div>
 
               {error && (

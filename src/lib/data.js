@@ -1094,3 +1094,30 @@ export const INGREDIENT_GROUPS = {
   sweeteners: ["şeker", "bal"],
   liquids: ["su", "et suyu", "sebze suyu", "tavuk suyu"],
 };
+
+export const ALLERGEN_OPTIONS = [
+  "süt",
+  "yoğurt",
+  "peynir",
+  "kaşar",
+  "tereyağı",
+  "krema",
+
+  "yumurta",
+
+  "fındık",
+  "ceviz",
+  "badem",
+  "fıstık",
+  "kaju",
+
+  "susam",
+  "tahin",
+
+  "balık",
+  "karides",
+  "midye",
+  "kalamar",
+
+  "soya",
+];

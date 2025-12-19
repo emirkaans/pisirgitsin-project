@@ -18,9 +18,7 @@ const SearchResults = () => {
 
   useEffect(() => {
     const fetchRecipes = async () => {
-      const { data, error } = await supabase
-        .from("recipe")
-        .select("*")
+      const { data, error } = await supabase.from("recipe").select("*");
 
       if (error) {
         setFetchError(error.message || "Veri alınamadı");

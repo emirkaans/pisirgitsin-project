@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const Header = () => {
-  const { isUserLoggedIn, user, logout } = useAuth();
+  const { isUserLoggedIn, user, logout, profile } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -30,15 +30,15 @@ const Header = () => {
     try {
       setIsLoggingOut(true);
       toast.loading("Çıkış yapılıyor...");
-      // Simulate a small delay for logout process
+
       await new Promise((resolve) => setTimeout(resolve, 800));
       await logout();
-      toast.dismiss(); // Tüm toast mesajlarını temizle
+      toast.dismiss();
       toast.success("Başarıyla çıkış yapıldı!");
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.dismiss(); // Hata durumunda da toast mesajlarını temizle
+      toast.dismiss();
       toast.error("Çıkış yapılırken bir hata oluştu!");
     } finally {
       setIsLoggingOut(false);
@@ -122,9 +122,13 @@ const Header = () => {
                   <HoverCardTrigger className="flex h-11 text-gray-700 hover:text-gray-900 text-sm lg:text-base px-3  rounded-md hover:bg-gray-100 font-medium items-center gap-2 cursor-pointer">
                     <Avatar>
                       <AvatarImage src={user.avatar} />
-                      <AvatarFallback>EK</AvatarFallback>
+                      <AvatarFallback>
+                        {profile?.full_name
+                          ?.split(" ")
+                          .map((name) => name.slice(0, 1))}
+                      </AvatarFallback>
                     </Avatar>
-                    <p> {user.name}</p>
+                    <p> {profile?.full_name}</p>
                     <IconChevronDown size={18} />
                   </HoverCardTrigger>
                   <HoverCardContent className="flex flex-col p-1">
