@@ -1,25 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import recipes from "./../../lib/api.json";
 import { useAuth } from "@/context/AuthContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 
 const LikedRecipes = () => {
-  const [likedRecipes, setLikedRecipes] = useState([]);
-  const [recipeRatings, setRecipeRatings] = useState({});
   const { isUserLoggedIn } = useAuth();
 
+  const {
+    favoriteIds,
+    favoriteRecipes,
+    fetchFavoriteRecipes,
+    toggleFavorite,
+    isFavorited,
+    loading,
+    saving,
+    error,
+  } = useFavorites();
+
+  const [recipeRatings, setRecipeRatings] = useState({});
+
+  // rating'leri localStorage’dan okumaya devam (senin mevcut sistemin)
   useEffect(() => {
     const savedRatings = JSON.parse(
       localStorage.getItem("recipeRatings") || "{}"
     );
     setRecipeRatings(savedRatings);
-
-    const savedLikes = JSON.parse(localStorage.getItem("likedRecipes") || "[]");
-    setLikedRecipes(savedLikes);
   }, []);
+
+  // Favori tarifleri DB’den çek
+  useEffect(() => {
+    if (!isUserLoggedIn) return;
+    // favoriteIds değişince tekrar çekmek mantıklı (küçük dataset)
+    fetchFavoriteRecipes();
+  }, [isUserLoggedIn, favoriteIds, fetchFavoriteRecipes]);
 
   const getAverageRating = (recipeId) => {
     const ratings = recipeRatings[recipeId] || [];
@@ -27,24 +43,10 @@ const LikedRecipes = () => {
     return ratings.reduce((a, b) => a + b, 0) / ratings.length;
   };
 
-  const handleLike = (recipeId, e) => {
-    e.preventDefault();
-    if (!isUserLoggedIn) {
-      alert("Beğenmek için giriş yapmalısınız.");
-      return;
-    }
-
-    const newLikedRecipes = likedRecipes.includes(recipeId)
-      ? likedRecipes.filter((id) => id !== recipeId)
-      : [...likedRecipes, recipeId];
-
-    localStorage.setItem("likedRecipes", JSON.stringify(newLikedRecipes));
-    setLikedRecipes(newLikedRecipes);
-  };
-
-  const likedRecipeDetails = recipes.filter((recipe) =>
-    likedRecipes.includes(recipe.id)
-  );
+  const likedRecipeDetails = useMemo(() => {
+    // Provider zaten sırayı favoriteIds’e göre diziyor ama yine de güvenli olalım
+    return Array.isArray(favoriteRecipes) ? favoriteRecipes : [];
+  }, [favoriteRecipes]);
 
   if (!isUserLoggedIn) {
     return (
@@ -79,6 +81,18 @@ const LikedRecipes = () => {
           </Link>
         </div>
 
+        {/* Hata */}
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
+            Bir hata oluştu: {error.message || String(error)}
+          </div>
+        )}
+
+        {/* Loading */}
+        {(loading || saving) && (
+          <div className="mb-6 text-sm text-gray-500">Yükleniyor...</div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {likedRecipeDetails.map((recipe) => (
             <Link
@@ -92,29 +106,39 @@ const LikedRecipes = () => {
                   alt={recipe.name}
                   className="w-full h-full object-cover"
                 />
+
                 <button
-                  onClick={(e) => handleLike(recipe.id, e)}
+                  type="button"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    try {
+                      await toggleFavorite(recipe.id);
+                    } catch (err) {
+                      console.error(err);
+                      alert("Favori güncellenemedi.");
+                    }
+                  }}
                   className={`absolute top-2 right-2 transition-colors duration-500 ${
-                    likedRecipes.includes(recipe.id)
+                    isFavorited(recipe.id)
                       ? "text-red-600"
                       : "text-white hover:text-red-600"
                   }`}
-                  title={
-                    likedRecipes.includes(recipe.id) ? "Beğendiniz" : "Beğen"
-                  }
+                  title={isFavorited(recipe.id) ? "Beğendiniz" : "Beğen"}
                   aria-label="Beğen"
                 >
-                  {likedRecipes.includes(recipe.id) ? (
+                  {isFavorited(recipe.id) ? (
                     <IconHeartFilled size={24} />
                   ) : (
                     <IconHeart size={24} />
                   )}
                 </button>
               </div>
+
               <div className="p-4">
                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
                   {recipe.name}
                 </h2>
+
                 <div className="flex items-center mb-2">
                   <div className="flex items-center">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -138,20 +162,26 @@ const LikedRecipes = () => {
                       : "Henüz değerlendirme yok"}
                   </span>
                 </div>
+
+                {/* Malzemeler (DB’de ingredients jsonb olmalı) */}
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-900 mb-1">
                     Malzemeler:
                   </h3>
+
                   <ul className="text-sm text-gray-600 list-disc list-inside">
-                    {recipe.ingredients.slice(0, 3).map((ingredient, index) => (
-                      <li key={index}>
-                        {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
-                        {ingredient?.ingredient}
-                      </li>
-                    ))}
-                    {recipe.ingredients.length > 3 && (
+                    {(recipe.ingredients ?? [])
+                      .slice(0, 3)
+                      .map((ingredient, index) => (
+                        <li key={index}>
+                          {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
+                          {ingredient?.ingredient}
+                        </li>
+                      ))}
+                    {(recipe.ingredients ?? []).length > 3 && (
                       <li className="text-gray-500">
-                        ve {recipe.ingredients.length - 3} malzeme daha...
+                        ve {(recipe.ingredients ?? []).length - 3} malzeme
+                        daha...
                       </li>
                     )}
                   </ul>
@@ -161,7 +191,8 @@ const LikedRecipes = () => {
           ))}
         </div>
 
-        {likedRecipeDetails.length === 0 && (
+        {/* Hiç favori yok */}
+        {favoriteIds.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-600">
               Henüz beğendiğiniz tarif bulunmamaktadır.

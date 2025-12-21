@@ -11,7 +11,6 @@ import {
   IconChevronDown,
   IconClipboard,
   IconHeart,
-  IconHeartFilled,
   IconLogout,
   IconSearch,
   IconSettings,
@@ -30,15 +29,12 @@ const Header = () => {
     try {
       setIsLoggingOut(true);
       toast.loading("Çıkış yapılıyor...");
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
       await logout();
-      toast.dismiss();
+      await new Promise((resolve) => setTimeout(resolve, 800));
       toast.success("Başarıyla çıkış yapıldı!");
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.dismiss();
       toast.error("Çıkış yapılırken bir hata oluştu!");
     } finally {
       setIsLoggingOut(false);

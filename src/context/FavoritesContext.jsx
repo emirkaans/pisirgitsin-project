@@ -13,23 +13,22 @@ import { useAuth } from "@/context/AuthContext";
 
 const FavoritesContext = createContext(undefined);
 
+const normalizeIds = (ids) =>
+  Array.isArray(ids)
+    ? ids
+        .map((x) => (typeof x === "string" ? Number(x) : x))
+        .filter((x) => Number.isFinite(x))
+    : [];
+
 export function FavoritesProvider({ children }) {
   const { user, isUserLoggedIn } = useAuth();
+  const userId = user?.id ?? null;
 
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [favoriteRecipes, setFavoriteRecipes] = useState([]); // opsiyonel
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-
-  const userId = user?.id ?? null;
-
-  const normalizeIds = (ids) =>
-    Array.isArray(ids)
-      ? ids
-          .map((x) => (typeof x === "string" ? Number(x) : x))
-          .filter((x) => Number.isFinite(x))
-      : [];
 
   const loadFavoriteIds = useCallback(async () => {
     setError(null);
@@ -55,8 +54,7 @@ export function FavoritesProvider({ children }) {
       return;
     }
 
-    const ids = normalizeIds(profile?.favorite_recipe_ids ?? []);
-    setFavoriteIds(ids);
+    setFavoriteIds(normalizeIds(profile?.favorite_recipe_ids ?? []));
     setLoading(false);
   }, [isUserLoggedIn, userId]);
 
@@ -64,63 +62,54 @@ export function FavoritesProvider({ children }) {
     loadFavoriteIds();
   }, [loadFavoriteIds]);
 
-  const persistFavoriteIds = useCallback(
-    async (nextIds) => {
-      if (!userId) throw new Error("Not authenticated");
+  /**
+   * ✅ Tek giriş: toggleFavorite
+   * - DB: RPC toggle_favorite(p_recipe_id)
+   * - Response: favorite_recipe_ids + likes_count vb döndürebilir
+   */
+  const toggleFavorite = useCallback(
+    async (recipeId) => {
+      if (!isUserLoggedIn || !userId) {
+        throw new Error("Not authenticated");
+      }
+
+      const id = Number(recipeId);
+      if (!Number.isFinite(id)) return;
 
       setSaving(true);
       setError(null);
 
-      const { error: uErr } = await supabase
-        .from("profile")
-        .update({ favorite_recipe_ids: nextIds })
-        .eq("id", userId);
+      // (opsiyonel) optimistic UI
+      const optimisticNext = favoriteIds.includes(id)
+        ? favoriteIds.filter((x) => x !== id)
+        : [...favoriteIds, id];
+      setFavoriteIds(optimisticNext);
+
+      const { data, error: rpcErr } = await supabase.rpc("toggle_favorite", {
+        p_recipe_id: id,
+      });
 
       setSaving(false);
 
-      if (uErr) {
-        setError(uErr);
-        throw uErr;
+      if (rpcErr) {
+        // optimistic rollback
+        setFavoriteIds(favoriteIds);
+        setError(rpcErr);
+        throw rpcErr;
+      }
+
+      // RPC returns table => data array olabilir
+      const row = Array.isArray(data) ? data[0] : data;
+
+      // ✅ Eğer favorite_recipe_ids dönüyorsa state'i onunla kesinleştir
+      if (row?.favorite_recipe_ids) {
+        setFavoriteIds(normalizeIds(row.favorite_recipe_ids));
+      } else {
+        // dönmüyorsa profili refresh et
+        await loadFavoriteIds();
       }
     },
-    [userId]
-  );
-
-  const addFavorite = useCallback(
-    async (recipeId) => {
-      const id = Number(recipeId);
-      if (!Number.isFinite(id)) return;
-
-      const nextIds = favoriteIds.includes(id)
-        ? favoriteIds
-        : [...favoriteIds, id];
-      setFavoriteIds(nextIds); // optimistic
-      await persistFavoriteIds(nextIds);
-    },
-    [favoriteIds, persistFavoriteIds]
-  );
-
-  const removeFavorite = useCallback(
-    async (recipeId) => {
-      const id = Number(recipeId);
-      if (!Number.isFinite(id)) return;
-
-      const nextIds = favoriteIds.filter((x) => x !== id);
-      setFavoriteIds(nextIds); // optimistic
-      await persistFavoriteIds(nextIds);
-    },
-    [favoriteIds, persistFavoriteIds]
-  );
-
-  const toggleFavorite = useCallback(
-    async (recipeId) => {
-      const id = Number(recipeId);
-      if (!Number.isFinite(id)) return;
-
-      if (favoriteIds.includes(id)) return removeFavorite(id);
-      return addFavorite(id);
-    },
-    [addFavorite, favoriteIds, removeFavorite]
+    [isUserLoggedIn, userId, favoriteIds, loadFavoriteIds]
   );
 
   const isFavorited = useCallback(
@@ -146,8 +135,9 @@ export function FavoritesProvider({ children }) {
       return [];
     }
 
+    // ✅ tablo adı "recipe"
     const { data, error: rErr } = await supabase
-      .from("recipes")
+      .from("recipe")
       .select("*")
       .in("id", favoriteIds);
 
@@ -176,8 +166,6 @@ export function FavoritesProvider({ children }) {
       reloadFavorites: loadFavoriteIds,
       fetchFavoriteRecipes,
 
-      addFavorite,
-      removeFavorite,
       toggleFavorite,
       isFavorited,
       count: favoriteIds.length,
@@ -190,8 +178,6 @@ export function FavoritesProvider({ children }) {
       favoriteRecipes,
       loadFavoriteIds,
       fetchFavoriteRecipes,
-      addFavorite,
-      removeFavorite,
       toggleFavorite,
       isFavorited,
     ]

@@ -1,25 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { IconUser, IconBell, IconLock } from "@tabler/icons-react";
+import {
+  IconUser,
+  IconAlertTriangle,
+  IconX,
+  IconLock,
+} from "@tabler/icons-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import MediaUploader from "@/components/ui/media-uploader";
+import { Badge } from "@/components/ui/badge";
+import { ALLERGEN_OPTIONS } from "@/constants/constants";
+import { supabase } from "@/lib/supabase";
 
 const SettingsPage = () => {
-  const { user, updateUser } = useAuth();
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, profile } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  console.log({ profile });
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: profile?.full_name ?? "",
+    email: user?.email ?? "",
     avatar: "",
+    allergens: profile?.allergens ?? [],
     notifications: {
       email: true,
       push: true,
@@ -28,32 +34,22 @@ const SettingsPage = () => {
       comments: true,
     },
   });
-  console.log(user, "user");
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-        setFormData({
-          name: userData.name || user.displayName || "",
-          email: userData.email || user.email || "",
-          avatar: userData.avatar || user.photoURL || "",
-          notifications: {
-            email: userData.notifications?.email ?? true,
-            push: userData.notifications?.push ?? true,
-            weeklyDigest: userData.notifications?.weeklyDigest ?? false,
-            newRecipes: userData.notifications?.newRecipes ?? true,
-            comments: userData.notifications?.comments ?? true,
-          },
-        });
-      } catch (error) {
-        console.error("Kullanıcı verileri yüklenirken hata:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    loadUserData();
-  }, [user, router]);
+  useEffect(() => {
+    setFormData({
+      name: profile?.full_name ?? "",
+      email: user?.email ?? "",
+      avatar: "",
+      allergens: profile?.allergens ?? [],
+      notifications: {
+        email: true,
+        push: true,
+        weeklyDigest: false,
+        newRecipes: true,
+        comments: true,
+      },
+    });
+  }, [profile, user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -61,44 +57,6 @@ const SettingsPage = () => {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const handleNotificationChange = (name) => {
-    setFormData((prev) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [name]: !prev.notifications[name],
-      },
-    }));
-  };
-
-  const handleSubmit = async (message) => {
-    setIsLoading(true);
-
-    try {
-      const updatedUserData = {
-        ...formData,
-        lastUpdated: new Date().toISOString(),
-      };
-
-      localStorage.setItem("userData", JSON.stringify(updatedUserData));
-
-      if (updateUser) {
-        await updateUser({
-          displayName: formData.name,
-          email: formData.email,
-          photoURL: formData.avatar,
-        });
-      }
-
-      toast.success(message);
-    } catch (error) {
-      console.error("Ayarlar kaydedilirken hata:", error);
-      toast.error("Ayarlar kaydedilirken bir hata oluştu");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   if (isLoading) {
@@ -133,16 +91,16 @@ const SettingsPage = () => {
                 Şifre
               </TabsTrigger>
               <TabsTrigger
-                value="notifications"
+                value="allergies"
                 className="flex items-center gap-2"
               >
-                <IconBell size={18} />
-                Bildirimler
+                <IconAlertTriangle size={18} />
+                Alerjiler
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="space-y-4 mt-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">İsim</Label>
                   <Input
@@ -165,22 +123,26 @@ const SettingsPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Profil Fotoğrafı</Label>
-                  <MediaUploader
-                    value={formData.avatar}
-                    onChange={(value) =>
-                      setFormData((prev) => ({ ...prev, avatar: value }))
-                    }
-                  />
-                </div>
-
                 <div className="flex justify-end">
                   <Button
                     type="button"
-                    onClick={() =>
-                      handleSubmit("Bilgileriniz başarıyla güncellendi!")
-                    }
+                    onClick={async () => {
+                      try {
+                        setIsLoading(true);
+
+                        await supabase
+                          .from("profile")
+                          .update({ full_name: formData.full_name })
+                          .eq("id", user.id);
+
+                        toast.success("Bilgileriniz başarıyla güncellendi.");
+                      } catch (e) {
+                        console.error(e);
+                        toast.error("Bilgileriniz güncellenemedi.");
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
                     disabled={isLoading}
                   >
                     {isLoading ? "Kaydediliyor..." : "Kaydet"}
@@ -221,9 +183,7 @@ const SettingsPage = () => {
                 <div className="flex justify-end">
                   <Button
                     type="button"
-                    onClick={() =>
-                      handleSubmit("Şifreniz başarıyla güncellendi!")
-                    }
+                    onClick={() => toast("Şifreniz başarıyla güncellendi!")}
                   >
                     Şifreyi Güncelle
                   </Button>
@@ -231,65 +191,94 @@ const SettingsPage = () => {
               </form>
             </TabsContent>
 
-            <TabsContent value="notifications" className="space-y-4 mt-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>E-posta bildirimleri</Label>
-                    <p className="text-sm text-gray-500">
-                      Önemli güncellemeler için e-posta alın
-                    </p>
-                  </div>
-                  <Switch
-                    className="data-[state=checked]:bg-orange-700 data-[state=unchecked]:bg-gray-900"
-                    checked={formData.notifications.email}
-                    onCheckedChange={() => handleNotificationChange("email")}
-                  />
-                </div>
+            <TabsContent value="allergies" className="space-y-4 mt-6">
+              <div className="space-y-2">
+                <h2 className="text-base font-medium text-gray-900">
+                  Alerjilerinizi seçin
+                </h2>
+                <p className="text-sm text-gray-500">
+                  Tariflerde sizi uyarmamız için alerjen maddeleri işaretleyin.
+                </p>
+              </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Haftalık özet</Label>
-                    <p className="text-sm text-gray-500">
-                      Haftalık tarif özetlerini alın
-                    </p>
-                  </div>
-                  <Switch
-                    className="data-[state=checked]:bg-orange-700 data-[state=unchecked]:bg-gray-900"
-                    checked={formData.notifications.weeklyDigest}
-                    onCheckedChange={() =>
-                      handleNotificationChange("weeklyDigest")
-                    }
-                  />
+              {formData.allergens?.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.allergens.map((a) => (
+                    <Badge key={a} variant="secondary" className="gap-1">
+                      {a}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            allergens: prev.allergens.filter((x) => x !== a),
+                          }))
+                        }
+                        className="ml-1"
+                        aria-label="Kaldır"
+                      >
+                        <IconX size={14} />
+                      </button>
+                    </Badge>
+                  ))}
                 </div>
+              )}
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Yeni tarifler</Label>
-                    <p className="text-sm text-gray-500">
-                      Yeni tarifler hakkında bilgilendiril
-                    </p>
-                  </div>
-                  <Switch
-                    className="data-[state=checked]:bg-orange-700 data-[state=unchecked]:bg-gray-900"
-                    checked={formData.notifications.newRecipes}
-                    onCheckedChange={() =>
-                      handleNotificationChange("newRecipes")
-                    }
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                {ALLERGEN_OPTIONS.map((item) => {
+                  const checked = formData.allergens?.includes(item);
+                  return (
+                    <label
+                      key={item}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setFormData((prev) => {
+                            const cur = Array.isArray(prev.allergens)
+                              ? prev.allergens
+                              : [];
+                            return {
+                              ...prev,
+                              allergens: checked
+                                ? cur.filter((x) => x !== item)
+                                : [...cur, item],
+                            };
+                          });
+                        }}
+                      />
+                      <span>{item}</span>
+                    </label>
+                  );
+                })}
+              </div>
 
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      handleSubmit("Tercihleriniz başarıyla kaydedildi.")
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setIsLoading(true);
+
+                      await supabase
+                        .from("profile")
+                        .update({ allergens: formData.allergens })
+                        .eq("id", user.id);
+
+                      toast.success("Alerjileriniz kaydedildi.");
+                    } catch (e) {
+                      console.error(e);
+                      toast.error("Alerjiler kaydedilemedi.");
+                    } finally {
+                      setIsLoading(false);
                     }
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Kaydediliyor..." : "Kaydet"}
-                  </Button>
-                </div>
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Kaydediliyor..." : "Kaydet"}
+                </Button>
               </div>
             </TabsContent>
           </Tabs>

@@ -25,7 +25,7 @@ const SearchPage = () => {
   const handleSearch = () => {
     if (ingredients.length === 0) return;
 
-    const queryString = ingredients.join(",");
+    const queryString = encodeURIComponent(ingredients.join(","));
     router.push(`/tarif-ara/sonuclar?malzemeler=${queryString}`);
   };
 

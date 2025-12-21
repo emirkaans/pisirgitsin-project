@@ -1,27 +1,55 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import recipes from "./../../../lib/api.json";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 
+import {
+  recipeHasAllergen,
+  isBlockedByDiet,
+  computeIngredientMatch,
+  scoreRecipe,
+  rankRecipe,
+  rankKeys,
+} from "@/lib/recommendSearch";
+import { DIET_BONUS_MAP } from "@/constants/constants";
+
+function normalize(s) {
+  return String(s || "")
+    .toLowerCase()
+    .trim();
+}
+
 function ResultsContent() {
   const searchParams = useSearchParams();
-  const ingredients = searchParams.get("malzemeler");
+  const ingredientsQ = searchParams.get("malzemeler");
+  console.log({ ingredientsQ });
+  const { isUserLoggedIn, profile } = useAuth();
+
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [error, setError] = useState(null);
+
+  // (like/rating kısmını şimdilik aynı bıraktım)
   const [recipeRatings, setRecipeRatings] = useState({});
   const [likedRecipes, setLikedRecipes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isUserLoggedIn } = useAuth();
-  const ingredientList = ingredients
-    ? ingredients
-        .split(",")
-        .map((term) => term.trim())
-        .filter(Boolean)
-    : [];
+
+  const ingredientList = useMemo(() => {
+    return ingredientsQ
+      ? ingredientsQ
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+  }, [ingredientsQ]);
+
+  const searchTerms = useMemo(
+    () => ingredientList.map(normalize).filter(Boolean),
+    [ingredientList]
+  );
 
   useEffect(() => {
     const savedRatings = JSON.parse(
@@ -55,47 +83,52 @@ function ResultsContent() {
   };
 
   useEffect(() => {
-    try {
-      setIsLoading(true);
-      if (ingredients) {
-        const searchTerms = ingredients
-          .split(",")
-          .map((term) => term.trim().toLowerCase());
+    const run = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-        const filtered = recipes
-          .map((recipe) => {
-            const missingIngredients = recipe.ingredients.filter(
-              (ingredient) => {
-                ingredient = ingredient?.ingredient.toLowerCase();
-                return !searchTerms.some((term) => ingredient.includes(term));
-              }
-            );
+        if (searchTerms.length === 0) {
+          setFilteredRecipes([]);
+          setIsLoading(false);
+          return;
+        }
 
-            return {
-              ...recipe,
-              missingIngredients,
-            };
+        // ✅ DB’den tarifleri çek (school project: geniş çek + client-side skorla)
+        const { data, error } = await supabase.rpc("search_recipes_by_terms", {
+          terms: searchTerms, // normalize edilmiş ["domates","patlıcan","soğan"]
+          lim: 150,
+          off: 0,
+        });
+
+        console.log({ data });
+        if (error) throw error;
+
+        const ranked = (data ?? [])
+          .map((r) => {
+            const { personal, popularity } = rankKeys(r, profile);
+            return { ...r, _personal: personal, _pop: popularity };
           })
-          .filter((recipe) => {
-            const recipeIngredients = recipe.ingredients.map((ingredient) =>
-              ingredient?.ingredient.toLowerCase()
-            );
-            return searchTerms.some((term) =>
-              recipeIngredients.some((ing) => ing.includes(term))
-            );
+          .sort((a, b) => {
+            if (b.match_count !== a.match_count)
+              return b.match_count - a.match_count;
+            if (b._personal !== a._personal) return b._personal - a._personal;
+            return b._pop - a._pop;
           });
 
-        setTimeout(() => {
-          setFilteredRecipes(filtered);
-          setIsLoading(false);
-        }, 500);
+        console.log({ ranked });
+        setFilteredRecipes(ranked);
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("Tarifler yüklenirken bir hata oluştu");
+        setIsLoading(false);
       }
-    } catch (err) {
-      setError("Tarifler yüklenirken bir hata oluştu");
-      console.error(err);
-      setIsLoading(false);
-    }
-  }, [ingredients]);
+    };
+
+    run();
+  }, [searchTerms.join(","), profile]); // profile gelince yeniden sıralasın
 
   if (error) {
     return (
@@ -165,14 +198,17 @@ function ResultsContent() {
                     )}
                   </button>
                 </div>
+
                 <div className="p-4">
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">
                     {recipe.name}
                   </h2>
+
                   <p className="text-sm text-gray-600 mb-2">
-                    Kategori: {recipe.kategori}
+                    Kategori: {recipe.main_category}
                   </p>
-                  {/* Rating Display */}
+
+                  {/* Rating Display (senin mevcut local rating mantığın) */}
                   <div className="flex items-center mb-2">
                     <div className="flex items-center">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -196,20 +232,8 @@ function ResultsContent() {
                         : "Henüz değerlendirme yok"}
                     </span>
                   </div>
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">
-                      Malzemeler:
-                    </h3>
-                    <ul className="text-sm text-gray-600 list-disc list-inside">
-                      {recipe.ingredients.map((ingredient, index) => (
-                        <li key={index}>
-                          {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
-                          {ingredient?.ingredient}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {recipe.missingIngredients.length > 0 && (
+
+                  {recipe.missingIngredients?.length > 0 && (
                     <div className="mb-4">
                       <h3 className="text-sm font-medium text-gray-900 mb-1">
                         Eksik Malzemeler:

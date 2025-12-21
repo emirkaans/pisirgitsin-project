@@ -27,7 +27,7 @@ const INGREDIENT_GROUPS = {
     "kuru fasulye",
     "barbunya",
   ],
-  meats: ["dana eti", "kuzu eti", "kuşbaşı et", "kıyma"],
+  meats: ["dana eti", "kuzu eti", "kuşbaşı et", "kıyma", "et"],
   poultry: ["tavuk", "tavuk göğsü", "tavuk but", "tavuk suyu"],
   seafood: ["balık", "somon", "levrek", "karides", "midye", "kalamar"],
   dairy: [
@@ -61,6 +61,17 @@ const INGREDIENT_GROUPS = {
 
 function normalizeIngredient(name) {
   return name.toLowerCase().trim();
+}
+
+export function findAllergenMatches(recipe, allergens) {
+  const a = (allergens ?? []).map(normalizeIngredient).filter(Boolean);
+  if (a.length === 0) return [];
+
+  const ings = (recipe?.ingredients ?? [])
+    .map((x) => normalizeIngredient(x?.ingredient))
+    .filter(Boolean);
+
+  return a.filter((al) => ings.some((ing) => ing.includes(al)));
 }
 
 function getIngredientGroup(ingredientName) {
@@ -571,6 +582,7 @@ export function buildMilkDessertRecipe(rawIngredients) {
     typeof baseRecipe.steps === "function"
       ? baseRecipe.steps(contextForSteps)
       : [];
+  const mainIngredientForSteps = mainIngredient ?? "malzemeler";
   const ingredients = buildFinalIngredients(baseRecipe, [
     mainIngredientForSteps,
   ]);
@@ -639,6 +651,8 @@ export function buildPastryRecipe(rawIngredients) {
     typeof baseRecipe.steps === "function"
       ? baseRecipe.steps(contextForSteps)
       : [];
+  const mainIngredientForSteps = mainIngredient ?? "malzemeler";
+
   const ingredients = buildFinalIngredients(baseRecipe, [
     mainIngredientForSteps,
   ]);

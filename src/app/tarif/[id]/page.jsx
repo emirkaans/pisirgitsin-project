@@ -1,91 +1,144 @@
 "use client";
 
-import { useParams, useRouter, usePathname } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import recipes from "./../../../lib/api.json";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import {
-  IconBookmark,
-  IconBookmarkFilled,
   IconHeart,
   IconHeartFilled,
-  IconPlus,
   IconClipboardCheck,
   IconClipboardPlus,
 } from "@tabler/icons-react";
+import { useFavorites } from "@/context/FavoritesContext";
+import { useSaves } from "@/context/SavesContext";
+import { findAllergenMatches } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+
+function safeJsonArray(v) {
+  // jsonb array normalde zaten array gelir
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") {
+    try {
+      const parsed = JSON.parse(v);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 const RecipeDetail = () => {
   const params = useParams();
   const router = useRouter();
-  const pathname = usePathname();
-  const recipeId = parseInt(params.id);
-  const recipe = recipes.find((r) => r.id === recipeId);
-  const { isUserLoggedIn } = useAuth();
+
+  const recipeId = useMemo(() => {
+    const raw = params?.id;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }, [params]);
+
+  const { isUserLoggedIn, profile } = useAuth();
+
+  const { favoriteIds, toggleFavorite } = useFavorites();
+  const { savedIds, toggleSave } = useSaves();
+
+  const [recipe, setRecipe] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [userRating, setUserRating] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [previousPath, setPreviousPath] = useState("");
-  const [isInMenu, setIsInMenu] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const isLiked = recipeId != null && favoriteIds.includes(recipeId);
+  const isInMenu = recipeId != null && savedIds.includes(recipeId);
+  const allergenMatches = findAllergenMatches(recipe, profile?.allergens);
 
   useEffect(() => {
+    if (recipeId == null) return;
+
+    let mounted = true;
     setIsLoading(true);
-    const savedRatings = JSON.parse(
-      localStorage.getItem("recipeRatings") || "{}"
-    );
-    const recipeRatings = savedRatings[recipeId] || [];
 
-    if (recipeRatings.length > 0) {
-      const avg =
-        recipeRatings.reduce((a, b) => a + b, 0) / recipeRatings.length;
-      setAverageRating(avg);
-      setTotalRatings(recipeRatings.length);
-    }
+    (async () => {
+      // ✅ 1) Tarifi DB’den çek
+      const { data, error } = await supabase
+        .from("recipe")
+        .select(
+          "id,name,image_url,main_category,sub_categories,ingredients,instructions,labels,time_in_minutes,difficulty,likes_count,saves_count,views_count"
+        )
+        .eq("id", recipeId)
+        .single();
 
-    if (isUserLoggedIn) {
-      const userRatings = JSON.parse(
-        localStorage.getItem("userRatings") || "{}"
+      if (!mounted) return;
+
+      if (error) {
+        console.error("recipe fetch error:", error);
+        setRecipe(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // jsonb alanları güvenli hale getir
+      const normalized = {
+        ...data,
+        sub_categories: safeJsonArray(data?.sub_categories),
+        ingredients: safeJsonArray(data?.ingredients),
+        instructions: safeJsonArray(data?.instructions),
+        labels: safeJsonArray(data?.labels),
+      };
+
+      setRecipe(normalized);
+
+      // ✅ 2) rating localStorage (mevcut kodunu koruyoruz)
+      const savedRatings = JSON.parse(
+        localStorage.getItem("recipeRatings") || "{}"
       );
-      setUserRating(userRatings[recipeId] || 0);
-    }
+      const recipeRatings = savedRatings[recipeId] || [];
+      if (recipeRatings.length > 0) {
+        const avg =
+          recipeRatings.reduce((a, b) => a + b, 0) / recipeRatings.length;
+        setAverageRating(avg);
+        setTotalRatings(recipeRatings.length);
+      } else {
+        setAverageRating(0);
+        setTotalRatings(0);
+      }
 
-    const likedRecipes = JSON.parse(
-      localStorage.getItem("likedRecipes") || "[]"
-    );
-    setIsLiked(likedRecipes.includes(recipeId));
+      if (isUserLoggedIn) {
+        const userRatings = JSON.parse(
+          localStorage.getItem("userRatings") || "{}"
+        );
+        setUserRating(userRatings[recipeId] || 0);
+      } else {
+        setUserRating(0);
+      }
 
-    const prevPath = sessionStorage.getItem("previousPath") || "/";
-    setPreviousPath(prevPath);
-
-    sessionStorage.setItem("previousPath", pathname);
-
-    const menuItems = JSON.parse(localStorage.getItem("menuItems") || "[]");
-    setIsInMenu(menuItems.includes(recipeId));
-
-    setTimeout(() => {
       setIsLoading(false);
-    }, 500);
-  }, [recipeId, isUserLoggedIn, pathname]);
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [recipeId, isUserLoggedIn]);
 
   const handleRating = (rating) => {
     if (!isUserLoggedIn) {
       alert("Değerlendirme yapmak için giriş yapmalısınız.");
       return;
     }
+    if (recipeId == null) return;
 
     const savedRatings = JSON.parse(
       localStorage.getItem("recipeRatings") || "{}"
     );
     const userRatings = JSON.parse(localStorage.getItem("userRatings") || "{}");
 
-    if (!savedRatings[recipeId]) {
-      savedRatings[recipeId] = [];
-    }
+    if (!savedRatings[recipeId]) savedRatings[recipeId] = [];
     savedRatings[recipeId].push(rating);
-
     userRatings[recipeId] = rating;
 
     localStorage.setItem("recipeRatings", JSON.stringify(savedRatings));
@@ -99,49 +152,33 @@ const RecipeDetail = () => {
     setTotalRatings(savedRatings[recipeId].length);
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (!isUserLoggedIn) {
       alert("Beğenmek için giriş yapmalısınız.");
       return;
     }
+    if (recipeId == null) return;
 
-    const likedRecipes = JSON.parse(
-      localStorage.getItem("likedRecipes") || "[]"
-    );
-
-    if (isLiked) {
-      const updatedLikes = likedRecipes.filter((id) => id !== recipeId);
-      localStorage.setItem("likedRecipes", JSON.stringify(updatedLikes));
-      setIsLiked(false);
-    } else {
-      likedRecipes.push(recipeId);
-      localStorage.setItem("likedRecipes", JSON.stringify(likedRecipes));
-      setIsLiked(true);
-    }
+    await toggleFavorite(recipeId);
   };
 
-  const handleAddToMenu = () => {
+  const handleAddToMenu = async () => {
     if (!isUserLoggedIn) {
       alert("Menüye eklemek için giriş yapmalısınız.");
       return;
     }
+    if (recipeId == null) return;
 
-    const menuItems = JSON.parse(localStorage.getItem("menuItems") || "[]");
-
-    if (isInMenu) {
-      const updatedMenu = menuItems.filter((id) => id !== recipeId);
-      localStorage.setItem("menuItems", JSON.stringify(updatedMenu));
-      setIsInMenu(false);
-    } else {
-      menuItems.push(recipeId);
-      localStorage.setItem("menuItems", JSON.stringify(menuItems));
-      setIsInMenu(true);
-    }
+    await toggleSave(recipeId);
   };
 
-  const handleBack = () => {
-    router.back();
+  const handleView = async () => {
+    await supabase.rpc("track_view", { p_recipe_id: recipeId, p_limit: 20 });
   };
+
+  useEffect(() => {
+    if (!isLoading && recipe) handleView();
+  }, [isLoading, recipe]);
 
   if (isLoading) {
     return (
@@ -216,36 +253,36 @@ const RecipeDetail = () => {
           <div className="p-6 flex flex-col gap-y-6">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-4 justify-between">
-                {" "}
                 <h1 className="text-[30px] font-bold text-gray-900 ">
                   {recipe.name}
-                </h1>{" "}
+                </h1>
+
                 <div className="flex gap-4 text-sm text-gray-500 mt-1">
                   <div className="flex items-center gap-1">
                     ⏱{" "}
                     <span>
-                      {recipe.time_in_minutes + " dk" || "Süre belirtilmemiş"}
+                      {recipe.time_in_minutes
+                        ? `${recipe.time_in_minutes} dk`
+                        : "Süre belirtilmemiş"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
                     💪{" "}
                     <span>{recipe.difficulty || "Zorluk belirtilmemiş"}</span>
                   </div>
-                </div>
-                <div className="flex items-center ml-auto  gap-2">
-                  {/* <button
-                    onClick={handleAddToMenu}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-md transition-colors ${
-                      isInMenu
-                        ? "bg-green-100 text-green-800 hover:bg-green-200"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                    }`}
-                    title={isInMenu ? "Menüden Çıkar" : "Menüme Ekle"}
-                  >
-                    <IconPlus size={20} />
-                    {isInMenu ? "Menüde" : "Menüme Ekle"}
-                  </button> */}
 
+                  {allergenMatches.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {allergenMatches.map((m) => (
+                        <Badge key={m} variant="destructive">
+                          ⚠️ {m}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center ml-auto gap-2">
                   <button
                     onClick={handleAddToMenu}
                     className="transition-colors text-gray-400 hover:text-green-600"
@@ -259,7 +296,7 @@ const RecipeDetail = () => {
                       />
                     ) : (
                       <IconClipboardPlus size={28} />
-                    )}{" "}
+                    )}
                   </button>
 
                   <button
@@ -269,7 +306,7 @@ const RecipeDetail = () => {
                         ? "text-red-600"
                         : "text-gray-400 hover:text-red-600"
                     }`}
-                    title={isLiked ? "Beğendiniz" : "Beğen"}
+                    title={isLiked ? "Favorilerde" : "Favorilere ekle"}
                   >
                     {isLiked ? (
                       <IconHeartFilled size={28} />
@@ -279,57 +316,63 @@ const RecipeDetail = () => {
                   </button>
                 </div>
               </div>
-              <div>
-                <div className="flex flex-wrap gap-2">
-                  {recipe.sub_categories.map((kategori, index) => {
-                    const categoryMap = {
-                      "Ana Yemekler": 1,
-                      Tatlılar: 2,
-                      Salatalar: 3,
-                      Çorbalar: 4,
-                      Kahvaltılıklar: 5,
-                      "Hamur İşleri": 8,
-                      Vejetaryen: 9,
-                      Glutensiz: 11,
-                      "Diyet Yemekler": 12,
-                      "Deniz Ürünleri": 14,
-                      "Et Yemekleri": 15,
-                      "Dünya Mutfağı": 16,
-                      "Tavuk Yemekleri": 17,
-                      Zeytinyağlılar: 18,
-                      Atıştırmalıklar: 19,
-                      "Baklagil Yemekleri": 20,
-                    };
 
-                    const pastelColors = [
-                      "bg-pink-100 text-pink-800 hover:bg-pink-200",
-                      "bg-blue-100 text-blue-800 hover:bg-blue-200",
-                      "bg-green-100 text-green-800 hover:bg-green-200",
-                      "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
-                      "bg-purple-100 text-purple-800 hover:bg-purple-200",
-                      "bg-indigo-100 text-indigo-800 hover:bg-indigo-200",
-                      "bg-red-100 text-red-800 hover:bg-red-200",
-                      "bg-teal-100 text-teal-800 hover:bg-teal-200",
-                    ];
+              <div className="flex flex-wrap gap-2">
+                {(recipe.sub_categories ?? []).map((kategori, index) => {
+                  const categoryMap = {
+                    "Ana Yemekler": 1,
+                    Tatlılar: 2,
+                    Salatalar: 3,
+                    Çorbalar: 4,
+                    Kahvaltılıklar: 5,
+                    "Hamur İşleri": 8,
+                    Vejetaryen: 9,
+                    Glutensiz: 11,
+                    "Diyet Yemekler": 12,
+                    "Deniz Ürünleri": 14,
+                    "Et Yemekleri": 15,
+                    "Dünya Mutfağı": 16,
+                    "Tavuk Yemekleri": 17,
+                    Zeytinyağlılar: 18,
+                    Atıştırmalıklar: 19,
+                    "Baklagil Yemekleri": 20,
+                  };
 
-                    const colorIndex = index % pastelColors.length;
-                    const categoryId = categoryMap[kategori];
+                  const pastelColors = [
+                    "bg-pink-100 text-pink-800 hover:bg-pink-200",
+                    "bg-blue-100 text-blue-800 hover:bg-blue-200",
+                    "bg-green-100 text-green-800 hover:bg-green-200",
+                    "bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+                    "bg-purple-100 text-purple-800 hover:bg-purple-200",
+                    "bg-indigo-100 text-indigo-800 hover:bg-indigo-200",
+                    "bg-red-100 text-red-800 hover:bg-red-200",
+                    "bg-teal-100 text-teal-800 hover:bg-teal-200",
+                  ];
 
-                    return (
-                      <Link
-                        key={index}
-                        href={`/kategoriler/${categoryId}`}
-                        className={`inline-block px-3 py-1 rounded-full text-sm font-medium transition-colors ${pastelColors[colorIndex]}`}
-                      >
-                        {kategori}
-                      </Link>
-                    );
-                  })}
-                </div>
+                  const colorIndex = index % pastelColors.length;
+                  const categoryId = categoryMap[kategori];
+
+                  // categoryId yoksa link vermeyelim
+                  const cls = `inline-block px-3 py-1 rounded-full text-sm font-medium transition-colors ${pastelColors[colorIndex]}`;
+
+                  return categoryId ? (
+                    <Link
+                      key={index}
+                      href={`/kategoriler/${categoryId}`}
+                      className={cls}
+                    >
+                      {kategori}
+                    </Link>
+                  ) : (
+                    <span key={index} className={cls}>
+                      {kategori}
+                    </span>
+                  );
+                })}
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {recipe.labels?.map((label, i) => (
+                {(recipe.labels ?? []).map((label, i) => (
                   <Link
                     href={`/etiketler/${encodeURIComponent(label)}`}
                     key={i}
@@ -341,7 +384,7 @@ const RecipeDetail = () => {
               </div>
             </div>
 
-            {/* Rating Section */}
+            {/* Rating */}
             <div className="">
               <div className="flex items-center gap-4">
                 <div className="flex items-center">
@@ -375,12 +418,13 @@ const RecipeDetail = () => {
               </div>
             </div>
 
+            {/* Ingredients */}
             <div className="">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Malzemeler
               </h2>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {recipe.ingredients.map((ingredient, index) => (
+                {(recipe.ingredients ?? []).map((ingredient, index) => (
                   <li key={index} className="flex items-center text-gray-700">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                     {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
@@ -390,12 +434,13 @@ const RecipeDetail = () => {
               </ul>
             </div>
 
+            {/* Instructions */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Hazırlanış
               </h2>
               <div className="space-y-4">
-                {recipe.instructions.map((adım, index) => (
+                {(recipe.instructions ?? []).map((adım, index) => (
                   <div key={index} className="flex items-center">
                     <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
                       <span className="text-green-600 font-semibold">

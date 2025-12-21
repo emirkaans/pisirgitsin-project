@@ -1,4 +1,3 @@
-// src/app/page.js
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -8,39 +7,34 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import HeroSlides from "@/components/HeroSlides";
-// import recipes from "@/lib/api.json";
+
+import { useFavorites } from "@/context/FavoritesContext";
+import { getTopCategories } from "@/lib/recommendedCategories";
+import { categoriesSet } from "@/constants/constants";
+import { getTopRecipes } from "@/lib/popularRecipes";
 
 export default function Home() {
-  const { isUserLoggedIn, user } = useAuth();
+  const { profile } = useAuth();
+  const { favoriteRecipes } = useFavorites();
   const router = useRouter();
-  // Örnek veri - gerçek uygulamada API'den gelecek
-  const categories = [
-    { id: 1, name: "Ana Yemekler", image: "/assets/main-dishes.webp" },
-    { id: 2, name: "Tatlılar", image: "/assets/desserts.webp" },
-    { id: 3, name: "Salatalar", image: "/assets/salads.webp" },
-    { id: 4, name: "Çorbalar", image: "/assets/soups.webp" },
-  ];
 
+  const [categories, setCategories] = useState([]);
   const [recipes, setRecipes] = useState([]);
-  const [fetchError, setFetchError] = useState("");
-
   useEffect(() => {
-    const fetchRecipes = async () => {
-      const { data, error } = await supabase
-        .from("recipe")
-        .select("*")
-        .eq("is_popular", true)
-        .limit(3);
+    if (!profile) return;
+    const top4 = getTopCategories({
+      profile,
+      favoriteRecipes,
+      now: new Date(),
+    });
 
-      if (error) {
-        setFetchError(error.message || "Veri alınamadı");
-      } else {
-        setRecipes(Array.isArray(data) ? data : []);
-      }
-    };
+    const userCategories = categoriesSet.filter((cat) =>
+      top4.includes(cat.name)
+    );
 
-    fetchRecipes();
-  }, []);
+    setCategories(userCategories);
+    getTopRecipes({ profile, limit: 3 }).then(setRecipes);
+  }, [profile]);
 
   const heroSlides = [
     {
@@ -65,20 +59,17 @@ export default function Home() {
 
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Otomatik geçiş için useEffect
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000); // Her 5 saniyede bir geçiş
+    }, 5000);
 
     return () => clearInterval(timer);
   }, []);
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Hero Section with Slider */}
       <section className="relative h-[500px] overflow-hidden">
-        {/* Slider görselleri */}
         {heroSlides.map((slide, index) => (
           <div
             key={index}
@@ -96,7 +87,6 @@ export default function Home() {
           </div>
         ))}
 
-        {/* Slider içeriği */}
         <div className="relative max-w-7xl pl-16 mx-auto px-4 h-full flex items-center">
           <div className="text-white">
             <h1 className="text-5xl font-bold mb-4 transition-transform duration-500 transform">
@@ -115,7 +105,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Slider noktaları */}
         <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 flex space-x-3">
           {heroSlides.map((_, index) => (
             <button
@@ -132,7 +121,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Önceki/Sonraki butonları */}
         <button
           onClick={() =>
             setCurrentSlide((prev) =>
@@ -185,40 +173,42 @@ export default function Home() {
         </button>
       </section>
 
-      {/* Categories Section */}
-      <section className="max-w-7xl bg-orange-50 flex items-center w-full gap-4 flex-col mx-auto px-4 py-16">
-        <h2 className="text-3xl text-orange-950 font-bold mb-4">Kategoriler</h2>
-        <div className="grid  w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/kategoriler/${category.id}`}
-              className="group relative h-48 rounded-lg overflow-hidden"
-            >
-              <Image
-                src={category.image}
-                alt={category.name}
-                fill
-                className="object-cover group-hover:scale-105 transition duration-300"
-              />
-              <div className="absolute inset-0 bg-black opacity-40 group-hover:opacity-50 transition duration-300"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <h3 className="text-white text-xl font-semibold">
-                  {category.name}
-                </h3>
-              </div>
-            </Link>
-          ))}
+      <section className="  bg-orange-50 ">
+        <div className="max-w-7xl flex items-center w-full gap-4 flex-col mx-auto px-4 py-16">
+          <h2 className="text-3xl text-orange-950 font-bold mb-4">
+            Kategoriler
+          </h2>
+          <div className="grid  w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/kategoriler/${category.id}`}
+                className="group relative h-48 rounded-lg overflow-hidden"
+              >
+                <Image
+                  src={category.image}
+                  alt={category.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition duration-300"
+                />
+                <div className="absolute inset-0 bg-black opacity-40 group-hover:opacity-50 transition duration-300"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <h3 className="text-white text-xl font-semibold">
+                    {category.name}
+                  </h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <Button
+            onClick={() => router.push("/kategoriler")}
+            variant={"secondary"}
+          >
+            Tüm Kategoriler Görüntüle
+          </Button>
         </div>
-        <Button
-          onClick={() => router.push("/kategoriler")}
-          variant={"secondary"}
-        >
-          Tüm Kategoriler Görüntüle
-        </Button>
       </section>
 
-      {/* Popular Recipes Section */}
       <section className="bg-white  py-16">
         <div className="max-w-7xl flex flex-col gap-y-8 mx-auto px-4">
           <div className="flex items-center justify-between gap-4">
@@ -266,22 +256,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-orange-950 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Aramıza Katılın</h2>
-          <p className="text-xl mb-8">
-            Favori tariflerinizi kaydedin, beğenin ve kendi tarif defterinizi
-            oluşturmak için ilk adımı atın.
-          </p>
-          <Link
-            href="/kayit-ol"
-            className="inline-block bg-white text-orange-950 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-200 transition duration-300"
-          >
-            Ücretsiz Kayıt Ol
-          </Link>
-        </div>
-      </section>
+      {!profile && (
+        <section className="bg-orange-950 text-white py-16">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-4">Aramıza Katılın</h2>
+            <p className="text-xl mb-8">
+              Favori tariflerinizi kaydedin, beğenin ve kendi tarif defterinizi
+              oluşturmak için ilk adımı atın.
+            </p>
+            <Link
+              href="/kayit-ol"
+              className="inline-block bg-white text-orange-950 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-200 transition duration-300"
+            >
+              Ücretsiz Kayıt Ol
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

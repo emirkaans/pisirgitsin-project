@@ -12,12 +12,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
-  const DEMO_USER = {
-    email: "test@test.com",
-    password: "123456",
-  };
+  console.log({ user });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,17 +26,20 @@ const LoginPage = () => {
       return;
     }
 
-    setTimeout(async () => {
-      if (email === DEMO_USER.email && password === DEMO_USER.password) {
-        login();
+    try {
+      const data = await login({ email, password });
+
+      if (data) {
         toast.success("Giriş başarılı! Yönlendiriliyorsunuz...");
+        setLoading(false);
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        await router.push("/");
-      } else {
-        toast.error("Geçersiz e-posta veya şifre!");
+        router.push("/");
       }
+    } catch (error) {
+      console.log(error);
+      toast.error("Geçersiz e-posta veya şifre!");
       setLoading(false);
-    }, 3000);
+    }
   };
 
   return (

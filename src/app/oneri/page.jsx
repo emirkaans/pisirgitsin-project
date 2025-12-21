@@ -1,4 +1,7 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+
+import { supabase } from "@/lib/supabase";
 import {
   buildChickenDishRecipe,
   buildLegumeDishRecipe,
@@ -9,9 +12,12 @@ import {
   buildSeafoodDishRecipe,
   buildSoupRecipe,
   buildVegetableDishRecipe,
-  SOUP_RECIPES_BY_SUBCATEGORY,
 } from "@/lib/utils";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
+import {
+  buildRecentTagWeights,
+  personalScore,
+} from "@/lib/recommendationScore";
 
 const CATEGORY_OPTIONS = [
   { id: "SOUP", label: "Çorbalar", builder: buildSoupRecipe },
@@ -46,11 +52,12 @@ const CATEGORY_OPTIONS = [
 ];
 
 const RecipeSuggester = () => {
+  const { profile, user, isUserLoggedIn } = useAuth();
   const [selectedCategoryIds, setSelectedCategoryIds] = useState(["SOUP"]);
   const [ingredientInput, setIngredientInput] = useState("");
   const [ingredients, setIngredients] = useState([]);
   const [results, setResults] = useState([]);
-
+  const [error, setError] = useState();
   const handleToggleCategory = (id) => {
     setResults([]);
     setSelectedCategoryIds((prev) =>
@@ -85,14 +92,32 @@ const RecipeSuggester = () => {
     setResults([]);
   };
 
-  const handleGenerate = () => {
-    console.log("SOUP MAP", SOUP_RECIPES_BY_SUBCATEGORY);
-    console.log(
-      "Soup test",
-      buildSoupRecipe(["brokoli", "süt", "mantar", "krema", "patates", "havuç"])
-    );
+  const fetchLastViewedMeta = useCallback(async () => {
+    setError(null);
 
-    console.log({ ingredients, selectedCategoryIds });
+    if (!isUserLoggedIn || !user) return [];
+    const ids = profile?.recent_viewed_recipe_ids ?? [];
+    if (!ids.length) return [];
+
+    const { data, error: rErr } = await supabase
+      .from("recipe")
+      .select("id, main_category, sub_categories") // sadece lazım olanlar
+      .in("id", ids);
+
+    if (rErr) {
+      setError(rErr);
+      return [];
+    }
+
+    // ids sırasını koru
+    const byId = new Map((data ?? []).map((r) => [r.id, r]));
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+
+    return ordered;
+  }, [isUserLoggedIn, user, profile?.recent_viewed_recipe_ids]);
+
+  const handleGenerate = async () => {
+    console.log({ ingredients });
     if (!ingredients.length) {
       setResults([]);
       return;
@@ -103,20 +128,27 @@ const RecipeSuggester = () => {
     selectedCategoryIds.forEach((catId) => {
       const option = CATEGORY_OPTIONS.find((c) => c.id === catId);
       if (!option || typeof option.builder !== "function") return;
-      console.log({ option });
+
       const recipe = option.builder(ingredients);
       if (recipe) {
         newResults.push({
           categoryId: catId,
           categoryLabel: option.label,
-          ...recipe,
+          ...recipe, // recipe: { name, ingredients, steps, ... }
         });
       }
     });
 
-    console.log({ newResults });
+    const lastViewedMeta = await fetchLastViewedMeta();
+    const recentTagWeights = buildRecentTagWeights(lastViewedMeta);
 
-    setResults(newResults);
+    const ctx = { userIngredients: ingredients, recentTagWeights };
+
+    const sorted = newResults
+      .map((r) => ({ ...r, _p: personalScore(r, profile, ctx) }))
+      .sort((a, b) => b._p - a._p);
+
+    setResults(sorted);
   };
 
   return (
