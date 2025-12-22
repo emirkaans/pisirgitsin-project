@@ -1,17 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import HeroSlides from "@/components/HeroSlides";
-
 import { useFavorites } from "@/context/FavoritesContext";
 import { getTopCategories } from "@/lib/recommendedCategories";
 import { categoriesSet } from "@/constants/constants";
-import { getTopRecipes } from "@/lib/popularRecipes";
+import { getPopularRecipes } from "@/lib/popularRecipes";
 
 export default function Home() {
   const { profile } = useAuth();
@@ -33,7 +30,7 @@ export default function Home() {
     );
 
     setCategories(userCategories);
-    getTopRecipes({ profile, limit: 3 }).then(setRecipes);
+    getPopularRecipes({ profile, limit: 3 }).then(setRecipes);
   }, [profile]);
 
   const heroSlides = [

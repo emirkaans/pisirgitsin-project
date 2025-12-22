@@ -9,13 +9,10 @@ import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 
 import {
   recipeHasAllergen,
-  isBlockedByDiet,
-  computeIngredientMatch,
-  scoreRecipe,
-  rankRecipe,
   rankKeys,
+  buildRankContext,
 } from "@/lib/recommendSearch";
-import { DIET_BONUS_MAP } from "@/constants/constants";
+import { useFavorites } from "@/context/FavoritesContext";
 
 function normalize(s) {
   return String(s || "")
@@ -23,18 +20,55 @@ function normalize(s) {
     .trim();
 }
 
+function getHistoryRecipeIds(profile) {
+  const fav = profile?.favorite_recipe_ids ?? [];
+  const saved = profile?.saved_recipe_ids ?? [];
+  const viewed = profile?.recent_viewed_recipe_ids ?? [];
+
+  // tekrarları temizle
+  return Array.from(new Set([...fav, ...saved, ...viewed]));
+}
+
+async function fetchRecipeMetaByIds(ids, supabase) {
+  if (!ids || ids.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from("recipe")
+    .select("id, main_category, sub_categories")
+    .in("id", ids);
+
+  if (error) throw error;
+
+  // map’e çevir
+  const map = {};
+  for (const r of data ?? []) {
+    map[r.id] = {
+      id: r.id,
+      main_category: r.main_category,
+      sub_categories: r.sub_categories ?? [],
+    };
+  }
+
+  return map;
+}
+
+async function buildRecipeMetaById(profile, supabase) {
+  const ids = getHistoryRecipeIds(profile);
+  return await fetchRecipeMetaByIds(ids, supabase);
+}
+
 function ResultsContent() {
   const searchParams = useSearchParams();
   const ingredientsQ = searchParams.get("malzemeler");
   console.log({ ingredientsQ });
-  const { isUserLoggedIn, profile } = useAuth();
+  const { profile } = useAuth();
+  const { favoriteIds, toggleFavorite } = useFavorites();
 
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [error, setError] = useState(null);
 
-  // (like/rating kısmını şimdilik aynı bıraktım)
   const [recipeRatings, setRecipeRatings] = useState({});
-  const [likedRecipes, setLikedRecipes] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
 
   const ingredientList = useMemo(() => {
@@ -51,35 +85,10 @@ function ResultsContent() {
     [ingredientList]
   );
 
-  useEffect(() => {
-    const savedRatings = JSON.parse(
-      localStorage.getItem("recipeRatings") || "{}"
-    );
-    setRecipeRatings(savedRatings);
-
-    const savedLikes = JSON.parse(localStorage.getItem("likedRecipes") || "[]");
-    setLikedRecipes(savedLikes);
-  }, []);
-
   const getAverageRating = (recipeId) => {
     const ratings = recipeRatings[recipeId] || [];
     if (ratings.length === 0) return 0;
     return ratings.reduce((a, b) => a + b, 0) / ratings.length;
-  };
-
-  const handleLike = (recipeId, e) => {
-    e.preventDefault();
-    if (!isUserLoggedIn) {
-      alert("Beğenmek için giriş yapmalısınız.");
-      return;
-    }
-
-    const newLikedRecipes = likedRecipes.includes(recipeId)
-      ? likedRecipes.filter((id) => id !== recipeId)
-      : [...likedRecipes, recipeId];
-
-    localStorage.setItem("likedRecipes", JSON.stringify(newLikedRecipes));
-    setLikedRecipes(newLikedRecipes);
   };
 
   useEffect(() => {
@@ -94,9 +103,8 @@ function ResultsContent() {
           return;
         }
 
-        // ✅ DB’den tarifleri çek (school project: geniş çek + client-side skorla)
         const { data, error } = await supabase.rpc("search_recipes_by_terms", {
-          terms: searchTerms, // normalize edilmiş ["domates","patlıcan","soğan"]
+          terms: searchTerms,
           lim: 150,
           off: 0,
         });
@@ -104,17 +112,16 @@ function ResultsContent() {
         console.log({ data });
         if (error) throw error;
 
-        const ranked = (data ?? [])
+        const recipeMetaById = await buildRecipeMetaById(profile, supabase);
+
+        const ctx = buildRankContext(profile, recipeMetaById);
+
+        const ranked = data
           .map((r) => {
-            const { personal, popularity } = rankKeys(r, profile);
-            return { ...r, _personal: personal, _pop: popularity };
+            const { blended } = rankKeys(r, profile, ctx);
+            return { ...r, _score: blended };
           })
-          .sort((a, b) => {
-            if (b.match_count !== a.match_count)
-              return b.match_count - a.match_count;
-            if (b._personal !== a._personal) return b._personal - a._personal;
-            return b._pop - a._pop;
-          });
+          .sort((a, b) => b._score - a._score);
 
         console.log({ ranked });
         setFilteredRecipes(ranked);
@@ -180,18 +187,26 @@ function ResultsContent() {
                     className="w-full h-full object-cover"
                   />
                   <button
-                    onClick={(e) => handleLike(recipe.id, e)}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        await toggleFavorite(recipe.id);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Favori güncellenemedi.");
+                      }
+                    }}
                     className={`absolute top-2 right-2 transition-colors duration-500 ${
-                      likedRecipes.includes(recipe.id)
+                      favoriteIds.includes(recipe.id)
                         ? "text-red-600"
                         : "text-white hover:text-red-600"
                     }`}
                     title={
-                      likedRecipes.includes(recipe.id) ? "Beğendiniz" : "Beğen"
+                      favoriteIds.includes(recipe.id) ? "Beğendiniz" : "Beğen"
                     }
                     aria-label="Beğen"
                   >
-                    {likedRecipes.includes(recipe.id) ? (
+                    {favoriteIds.includes(recipe.id) ? (
                       <IconHeartFilled size={24} />
                     ) : (
                       <IconHeart size={24} />

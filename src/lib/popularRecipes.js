@@ -1,185 +1,216 @@
-import { DIET_BLOCK_MAP, DIET_BONUS_MAP } from "@/constants/constants";
+import { DIET_BONUS_MAP, DIET_BLOCK_MAP } from "@/constants/constants";
 import { supabase } from "@/lib/supabase";
 
-function normalize(s) {
-  return String(s || "")
+const norm = (s) =>
+  String(s || "")
     .toLowerCase()
     .trim();
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function getTagSet(recipe) {
+  const set = new Set();
+  if (recipe?.main_category) set.add(norm(recipe.main_category));
+  const subs = Array.isArray(recipe?.sub_categories)
+    ? recipe.sub_categories
+    : [];
+  for (const sc of subs) set.add(norm(sc));
+  return set;
+}
+
+function recipeHasAllergen(recipe, allergens) {
+  const a = (allergens ?? []).map(norm).filter(Boolean);
+  if (a.length === 0) return false;
+
+  const ings = (recipe?.ingredients ?? [])
+    .map((x) => norm(x?.ingredient))
+    .filter(Boolean);
+
+  return ings.some((ing) => a.some((al) => ing.includes(al)));
 }
 
 function popularityScore(r) {
   const saves = Number(r?.saves_count ?? 0);
   const likes = Number(r?.likes_count ?? 0);
   const views = Number(r?.views_count ?? 0);
-  return saves * 5 + likes * 2 + views * 0.1;
+  return saves * 2 + likes * 1 + views * 0.05;
 }
 
-function recipeHasAllergen(recipe, allergens) {
-  const a = (allergens ?? []).map(normalize).filter(Boolean);
-  if (a.length === 0) return false;
-
-  const ingredients = (recipe?.ingredients ?? []).map((x) =>
-    normalize(x?.ingredient)
-  );
-  return ingredients.some((ing) =>
-    a.some((al) => ing.includes(al) || al.includes(ing))
-  );
-}
-
-function uniq(arr) {
-  return Array.from(new Set(arr));
-}
-function normCat(s) {
-  return String(s || "")
-    .toLowerCase()
-    .trim();
-}
-
-function getRecipeCategorySet(recipe) {
-  const set = new Set();
-  if (recipe?.main_category) set.add(normCat(recipe.main_category));
-
-  const subs = Array.isArray(recipe?.sub_categories)
-    ? recipe.sub_categories
-    : [];
-  for (const sc of subs) set.add(normCat(sc));
-
-  return set; // normalized
-}
-
-function hasAnyCategory(recipe, categories) {
-  const catSet = getRecipeCategorySet(recipe);
-  const list = (categories ?? []).map(normCat);
-  return list.some((c) => catSet.has(c));
-}
-
-function isBlockedByDiet(recipe, blockedCategories) {
-  return hasAnyCategory(recipe, blockedCategories);
-}
-
-export async function getTopRecipes({ profile, limit = 3 } = {}) {
-  const allergens = Array.isArray(profile?.allergens) ? profile.allergens : [];
-  const favoriteIds = Array.isArray(profile?.favorite_recipe_ids)
+function getStage(profile, coldStartEnd = 6, matureStart = 20) {
+  const fav = Array.isArray(profile?.favorite_recipe_ids)
     ? profile.favorite_recipe_ids
     : [];
-  const userCategories = Array.isArray(profile?.categories)
-    ? profile.categories
+  const saved = Array.isArray(profile?.saved_recipe_ids)
+    ? profile.saved_recipe_ids
     : [];
-  const diets = Array.isArray(profile?.diets)
-    ? profile.diets.map(normalize)
-    : [];
+  const engagement = fav.length + saved.length;
+  return clamp01((engagement - coldStartEnd) / (matureStart - coldStartEnd));
+}
 
-  const dietCategories = uniq(diets.flatMap((d) => DIET_BONUS_MAP[d] ?? []));
-  const blockedCategories = uniq(diets.flatMap((d) => DIET_BLOCK_MAP[d] ?? []));
+// viewIds: [en yeni ... en eski]
+function buildCategoryProfileFromHistory({
+  favMeta,
+  savedMeta,
+  viewMeta,
+  viewIds,
+}) {
+  const counts = new Map(); // tag -> weight
 
-  const blockedSet = new Set(blockedCategories.map(normCat));
-  console.log({
-    allergens,
-    favoriteIds,
-    userCategories,
-    dietCategories,
-    blockedCategories,
-    diets,
-  });
-  const selected = [];
-
-  const addUnique = (arr) => {
-    for (const r of arr) {
-      if (!r?.id) continue;
-      if (selected.some((x) => x.id === r.id)) continue;
-      if (recipeHasAllergen(r, allergens)) continue;
-
-      // ✅ diet block kategorileri ele (ör: vejetaryen -> tavuk)
-      if (isBlockedByDiet(r, blockedCategories)) continue;
-
-      selected.push(r);
-      if (selected.length === limit) break;
-    }
+  const addTags = (recipe, w) => {
+    const tags = getTagSet(recipe);
+    for (const t of tags) counts.set(t, (counts.get(t) || 0) + w);
   };
 
-  // 1) Favoriler >= 3 ise: favorilerin içinden en iyi 3
-  if (favoriteIds.length >= limit) {
-    const { data, error } = await supabase
-      .from("recipe")
-      .select(
-        "id,name,image_url,main_category,sub_categories,ingredients,likes_count,saves_count,views_count,time_in_minutes"
-      )
-      .in("id", favoriteIds);
+  // fav ve saved: güçlü sinyal
+  for (const r of favMeta) addTags(r, 3.0);
+  for (const r of savedMeta) addTags(r, 2.0);
 
-    if (error) throw error;
+  // viewed: recency ile ağırlık (en yeni en güçlü)
+  const n = viewMeta.length;
+  for (let i = 0; i < viewIds.length; i++) {
+    const id = viewIds[i]; // i=0 en yeni
+    const r = viewMeta.find((x) => x.id === id);
+    if (!r) continue;
 
-    const filtered = (data ?? []).filter(
-      (r) => !recipeHasAllergen(r, allergens)
-    );
-    filtered.sort((a, b) => popularityScore(b) - popularityScore(a));
-    return filtered.slice(0, limit);
+    const t = n <= 1 ? 1 : 1 - i / (n - 1); // en yeni:1, en eski:0
+    const w = lerp(0.6, 1.6, t); // en yeni 1.6, en eski 0.6
+    addTags(r, w);
   }
 
-  // 2) Favoriler < 3 ise: favorileri ekle
-  if (favoriteIds.length > 0) {
+  return counts;
+}
+
+function affinityFromProfile(recipe, tagWeightMap) {
+  if (!tagWeightMap || tagWeightMap.size === 0) return 0;
+  const tags = getTagSet(recipe);
+  let s = 0;
+  for (const t of tags) s += tagWeightMap.get(t) || 0;
+  return s;
+}
+
+export async function getPopularRecipes({
+  profile,
+  limit = 6,
+  poolLimit = 250,
+  coldStartEnd = 6,
+  matureStart = 20,
+
+  excludeKnown = true,
+} = {}) {
+  if (!profile) return [];
+
+  const stage = getStage(profile, coldStartEnd, matureStart);
+
+  const favIds = Array.isArray(profile?.favorite_recipe_ids)
+    ? profile.favorite_recipe_ids
+    : [];
+  const savedIds = Array.isArray(profile?.saved_recipe_ids)
+    ? profile.saved_recipe_ids
+    : [];
+  const viewIds = Array.isArray(profile?.recent_viewed_recipe_ids)
+    ? profile.recent_viewed_recipe_ids
+    : [];
+
+  const allergens = Array.isArray(profile?.allergens) ? profile.allergens : [];
+  const diets = Array.isArray(profile?.diets)
+    ? profile.diets.map(norm).filter(Boolean)
+    : [];
+  const userCats = Array.isArray(profile?.categories)
+    ? profile.categories.map(norm).filter(Boolean)
+    : [];
+
+  const excludeIds = new Set(
+    excludeKnown ? [...favIds, ...savedIds, ...viewIds] : []
+  );
+
+  // --- 1) History meta çek (fav/saved/view) ---
+  const historyIds = Array.from(
+    new Set([...favIds, ...savedIds, ...viewIds])
+  ).slice(0, 200);
+
+  let historyMeta = [];
+  if (historyIds.length) {
     const { data, error } = await supabase
       .from("recipe")
-      .select(
-        "id,name,image_url,main_category,sub_categories,ingredients,likes_count,saves_count,views_count,time_in_minutes"
-      )
-      .in("id", favoriteIds);
+      .select("id,main_category,sub_categories")
+      .in("id", historyIds);
 
     if (error) throw error;
-
-    const sortedFavs = (data ?? []).sort(
-      (a, b) => popularityScore(b) - popularityScore(a)
-    );
-    addUnique(sortedFavs);
+    historyMeta = data ?? [];
   }
 
-  // 3) Kategori havuzu ile tamamla (user categories + diet categories)
+  const favMeta = historyMeta.filter((r) => favIds.includes(r.id));
+  const savedMeta = historyMeta.filter((r) => savedIds.includes(r.id));
+  const viewMeta = historyMeta.filter((r) => viewIds.includes(r.id));
 
-  const poolCategories = uniq([
-    ...(userCategories ?? []),
-    ...(dietCategories ?? []),
-  ])
-    .filter(Boolean)
-    .filter((c) => !blockedSet.has(normCat(c)));
+  // --- 2) Kategori profili oluştur (asıl kişiselleştirme burada) ---
+  const tagProfile = buildCategoryProfileFromHistory({
+    favMeta,
+    savedMeta,
+    viewMeta,
+    viewIds, // en yeni -> en eski
+  });
 
-  if (selected.length < limit && poolCategories.length > 0) {
-    // Basit yaklaşım: bu kategorilerdeki tariflerden popülerleri çek
-    // (DB’de main_category string match)
-    const { data, error } = await supabase
-      .from("recipe")
-      .select(
-        "id,name,image_url,main_category,sub_categories,ingredients,likes_count,saves_count,views_count,time_in_minutes"
-      )
-      .order("saves_count", { ascending: false })
-      .order("likes_count", { ascending: false })
-      .order("views_count", { ascending: false })
-      .limit(80); // biraz daha geniş çekiyoruz
+  // --- 3) Cold’ta onboarding + diet küçük katkı; mature’da sıfıra yaklaşır ---
+  const W = {
+    profileCats: lerp(1.2, 0.1, stage), // cold güçlü, mature çok zayıf
+    dietBonus: lerp(0.8, 0.0, stage), // diyet zamanla unutulsun
+    dietPenalty: lerp(9999, 0.0, stage), // cold’ta neredeyse block, mature’da 0
+    affinity: lerp(40, 90, stage), // mature’da kişisel uyum daha baskın
+  };
 
-    if (error) throw error;
+  const dietBonusTags = diets
+    .flatMap((d) => DIET_BONUS_MAP?.[d] ?? [])
+    .map(norm);
+  const dietBlockTags = diets
+    .flatMap((d) => DIET_BLOCK_MAP?.[d] ?? [])
+    .map(norm);
 
-    // ✅ poolCategories main veya sub match ediyorsa al
-    const poolMatched = (data ?? []).filter((r) =>
-      hasAnyCategory(r, poolCategories)
-    );
+  // --- 4) Global popüler havuzu çek ---
+  const { data: pool, error: poolErr } = await supabase
+    .from("recipe")
+    .select(
+      "id,name,image_url,main_category,sub_categories,ingredients,saves_count,likes_count,views_count,time_in_minutes"
+    )
+    .order("saves_count", { ascending: false })
+    .order("likes_count", { ascending: false })
+    .order("views_count", { ascending: false })
+    .limit(poolLimit);
 
-    addUnique(poolMatched);
+  if (poolErr) throw poolErr;
+
+  // --- 5) Skorla ---
+  const scored = [];
+
+  for (const r of pool ?? []) {
+    if (!r?.id) continue;
+    if (excludeIds.has(r.id)) continue;
+    if (recipeHasAllergen(r, allergens)) continue;
+
+    const pop = popularityScore(r);
+
+    // kişisel kategori profili ile uyum
+    const aff = affinityFromProfile(r, tagProfile);
+
+    // cold yardımları
+    const tags = getTagSet(r);
+
+    const profileCatHit = userCats.some((c) => tags.has(c)) ? 1 : 0;
+    const dietBonusHit = dietBonusTags.some((t) => tags.has(t)) ? 1 : 0;
+    const dietBlocked = dietBlockTags.some((t) => tags.has(t)) ? 1 : 0;
+
+    // final = pop + aff*W.affinity + coldBoost - dietPenalty
+    const final =
+      pop +
+      aff * W.affinity +
+      profileCatHit * W.profileCats +
+      dietBonusHit * W.dietBonus -
+      dietBlocked * W.dietPenalty;
+
+    scored.push({ r, s: final });
   }
 
-  // 4) Hala dolmadıysa: genel popüler ile tamamla
-  if (selected.length < limit) {
-    const { data, error } = await supabase
-      .from("recipe")
-      .select(
-        "id,name,image_url,main_category,sub_categories,ingredients,likes_count,saves_count,views_count,time_in_minutes"
-      )
-      .order("saves_count", { ascending: false })
-      .order("likes_count", { ascending: false })
-      .order("views_count", { ascending: false })
-      .limit(50);
+  scored.sort((a, b) => b.s - a.s);
 
-    if (error) throw error;
-
-    addUnique(data ?? []);
-  }
-
-  return selected.slice(0, limit);
+  return scored.slice(0, limit).map((x) => x.r);
 }
