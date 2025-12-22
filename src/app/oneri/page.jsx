@@ -1,5 +1,6 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
+import { suggestedPersonalScore } from "@/lib/recipeSuggester";
 
 import { supabase } from "@/lib/supabase";
 import {
@@ -14,10 +15,6 @@ import {
   buildVegetableDishRecipe,
 } from "@/lib/utils";
 import React, { useCallback, useState } from "react";
-import {
-  buildRecentTagWeights,
-  personalScore,
-} from "@/lib/recommendationScore";
 
 const CATEGORY_OPTIONS = [
   { id: "SOUP", label: "Çorbalar", builder: buildSoupRecipe },
@@ -116,8 +113,7 @@ const RecipeSuggester = () => {
     return ordered;
   }, [isUserLoggedIn, user, profile?.recent_viewed_recipe_ids]);
 
-  const handleGenerate = async () => {
-    console.log({ ingredients });
+  const handleGenerate = () => {
     if (!ingredients.length) {
       setResults([]);
       return;
@@ -139,13 +135,9 @@ const RecipeSuggester = () => {
       }
     });
 
-    const lastViewedMeta = await fetchLastViewedMeta();
-    const recentTagWeights = buildRecentTagWeights(lastViewedMeta);
-
-    const ctx = { userIngredients: ingredients, recentTagWeights };
-
+    // ✅ cold start sıralaması (göstermeyi değiştirmiyor, sadece order)
     const sorted = newResults
-      .map((r) => ({ ...r, _p: personalScore(r, profile, ctx) }))
+      .map((r) => ({ ...r, _p: suggestedPersonalScore(r, profile) }))
       .sort((a, b) => b._p - a._p);
 
     setResults(sorted);
@@ -325,7 +317,6 @@ const RecipeSuggester = () => {
         )}
       </section>
 
-      {/* Öneri butonu */}
       <div style={{ marginBottom: "1.5rem" }}>
         <button
           type="button"

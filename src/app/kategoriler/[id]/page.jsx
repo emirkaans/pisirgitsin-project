@@ -2,95 +2,84 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import recipes from "./../../../lib/api.json";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
+import { useFavorites } from "@/context/FavoritesContext";
+
+const categories = [
+  { id: 1, name: "Ana Yemekler" },
+  { id: 2, name: "Tatlılar" },
+  { id: 3, name: "Salatalar" },
+  { id: 4, name: "Çorbalar" },
+  { id: 5, name: "Kahvaltılıklar" },
+  { id: 8, name: "Hamur İşleri" },
+  { id: 9, name: "Vejetaryen" },
+  { id: 11, name: "Glutensiz" },
+  { id: 12, name: "Diyet Yemekler" },
+  { id: 14, name: "Deniz Ürünleri" },
+  { id: 15, name: "Et Yemekleri" },
+  { id: 16, name: "Dünya Mutfağı" },
+  { id: 17, name: "Tavuk Yemekleri" },
+  { id: 18, name: "Zeytinyağlılar" },
+  { id: 19, name: "Atıştırmalıklar" },
+  { id: 20, name: "Baklagil Yemekleri" },
+];
 
 const CategoryRecipes = () => {
   const params = useParams();
-  const categoryId = parseInt(params.id);
+  const categoryId = Number(params.id);
+  const { favoriteIds, toggleFavorite } = useFavorites();
   const [categoryRecipes, setCategoryRecipes] = useState([]);
-  const [recipeRatings, setRecipeRatings] = useState({});
   const [categoryName, setCategoryName] = useState("");
-  const [likedRecipes, setLikedRecipes] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
+
   const { isUserLoggedIn } = useAuth();
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const savedRatings = JSON.parse(
-        localStorage.getItem("recipeRatings") || "{}"
-      );
-      setRecipeRatings(savedRatings);
+    let cancelled = false;
 
-      const savedLikes = JSON.parse(
-        localStorage.getItem("likedRecipes") || "[]"
-      );
-      setLikedRecipes(savedLikes);
-
-      const categories = [
-        { id: 1, name: "Ana Yemekler" },
-        { id: 2, name: "Tatlılar" },
-        { id: 3, name: "Salatalar" },
-        { id: 4, name: "Çorbalar" },
-        { id: 5, name: "Kahvaltılıklar" },
-        { id: 8, name: "Hamur İşleri" },
-        { id: 9, name: "Vejetaryen" },
-        { id: 11, name: "Glutensiz" },
-        { id: 12, name: "Diyet Yemekler" },
-        { id: 14, name: "Deniz Ürünleri" },
-        { id: 15, name: "Et Yemekleri" },
-        { id: 16, name: "Dünya Mutfağı" },
-        { id: 17, name: "Tavuk Yemekleri" },
-        { id: 18, name: "Zeytinyağlılar" },
-        { id: 19, name: "Atıştırmalıklar" },
-        { id: 20, name: "Baklagil Yemekleri" },
-      ];
+    async function load() {
+      setIsLoading(true);
 
       const category = categories.find((c) => c.id === categoryId);
-      if (category) {
-        setCategoryName(category.name);
+      setCategoryName(category?.name ?? "");
+
+      if (!category?.name) {
+        setCategoryRecipes([]);
+        setIsLoading(false);
+        return;
       }
 
-      const filteredRecipes = recipes.filter((recipe) => {
-        const recipeCategories = Array.isArray(recipe.sub_categories)
-          ? recipe.sub_categories
-          : Array.isArray(recipe.kategori)
-          ? recipe.kategori
-          : [recipe.kategori];
+      const json = JSON.stringify([category.name]);
 
-        return recipeCategories.some((cat) => cat === category?.name);
-      });
+      const { data, error } = await supabase
+        .from("recipe")
+        .select(
+          "id,name,image_url,ingredients,main_category,sub_categories,time_in_minutes"
+        )
+        .or(`main_category.eq.${category.name},sub_categories.cs.${json}`);
+      console.log({ data });
+      if (cancelled) return;
 
-      setCategoryRecipes(filteredRecipes);
+      if (error) {
+        console.error("category recipes error:", error);
+        setCategoryRecipes([]);
+      } else {
+        setCategoryRecipes(data ?? []);
+      }
+
       setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [categoryId]);
-
-  const getAverageRating = (recipeId) => {
-    const ratings = recipeRatings[recipeId] || [];
-    if (ratings.length === 0) return 0;
-    return ratings.reduce((a, b) => a + b, 0) / ratings.length;
-  };
-
-  const handleLike = (recipeId, e) => {
-    e.preventDefault();
-    if (!isUserLoggedIn) {
-      alert("Beğenmek için giriş yapmalısınız.");
-      return;
     }
 
-    const newLikedRecipes = likedRecipes.includes(recipeId)
-      ? likedRecipes.filter((id) => id !== recipeId)
-      : [...likedRecipes, recipeId];
+    load();
 
-    localStorage.setItem("likedRecipes", JSON.stringify(newLikedRecipes));
-    setLikedRecipes(newLikedRecipes);
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryId]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -115,6 +104,7 @@ const CategoryRecipes = () => {
                 ← Kategorilere Dön
               </Link>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {categoryRecipes.map((recipe) => (
                 <Link
@@ -129,59 +119,44 @@ const CategoryRecipes = () => {
                       className="w-full h-full object-cover"
                     />
                     <button
-                      onClick={(e) => handleLike(recipe.id, e)}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        try {
+                          await toggleFavorite(recipe.id);
+                        } catch (err) {
+                          console.error(err);
+                          alert("Favori güncellenemedi.");
+                        }
+                      }}
                       className={`absolute top-2 right-2 transition-colors duration-500 ${
-                        likedRecipes.includes(recipe.id)
+                        favoriteIds.includes(recipe.id)
                           ? "text-red-600"
                           : "text-white hover:text-red-600"
                       }`}
                       title={
-                        likedRecipes.includes(recipe.id)
-                          ? "Beğendiniz"
-                          : "Beğen"
+                        favoriteIds.includes(recipe.id) ? "Beğendiniz" : "Beğen"
                       }
                       aria-label="Beğen"
                     >
-                      {likedRecipes.includes(recipe.id) ? (
+                      {favoriteIds.includes(recipe.id) ? (
                         <IconHeartFilled size={24} />
                       ) : (
                         <IconHeart size={24} />
                       )}
                     </button>
                   </div>
+
                   <div className="p-4">
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">
                       {recipe.name}
                     </h2>
-                    <div className="flex items-center mb-2">
-                      <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <span
-                            key={star}
-                            className={`text-sm ${
-                              star <= getAverageRating(recipe.id)
-                                ? "text-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-600 ml-2">
-                        {getAverageRating(recipe.id) > 0
-                          ? `${getAverageRating(recipe.id).toFixed(1)} (${
-                              recipeRatings[recipe.id]?.length || 0
-                            } değerlendirme)`
-                          : "Henüz değerlendirme yok"}
-                      </span>
-                    </div>
+
                     <div className="mb-4">
                       <h3 className="text-sm font-medium text-gray-900 mb-1">
                         Malzemeler:
                       </h3>
                       <ul className="text-sm text-gray-600 list-disc list-inside">
-                        {recipe.ingredients
+                        {(recipe.ingredients ?? [])
                           .slice(0, 3)
                           .map((ingredient, index) => (
                             <li key={index}>
@@ -190,9 +165,10 @@ const CategoryRecipes = () => {
                               {ingredient?.ingredient}
                             </li>
                           ))}
-                        {recipe.ingredients.length > 3 && (
+                        {(recipe.ingredients ?? []).length > 3 && (
                           <li className="text-gray-500">
-                            ve {recipe.ingredients.length - 3} malzeme daha...
+                            ve {(recipe.ingredients ?? []).length - 3} malzeme
+                            daha...
                           </li>
                         )}
                       </ul>
@@ -201,6 +177,7 @@ const CategoryRecipes = () => {
                 </Link>
               ))}
             </div>
+
             {categoryRecipes.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600">

@@ -549,7 +549,7 @@ function decideMilkDessertSubCategory(cleaned) {
   if (cleaned.includes("kakao") || cleaned.includes("çikolata"))
     return "PUDDING";
   if (cleaned.includes("un") || cleaned.includes("nişasta")) return "MUHALLEBI";
-  return "PUDDING";
+  return null; // ✅ PUDDING değil
 }
 
 function buildMilkDessertName({ subCategoryId, mainIngredient }) {
@@ -568,24 +568,36 @@ export function buildMilkDessertRecipe(rawIngredients) {
     .map(normalizeIngredient)
     .filter((i) => i.length > 0);
   if (!cleaned.length) return null;
+
+  // ✅ süt yoksa sütlü tatlı önermeyelim
+  // (istersen krema/yoğurt da kabul edebiliriz)
+  const hasMilk = cleaned.includes("süt");
+  if (!hasMilk) return null;
+
   const subCategoryId = decideMilkDessertSubCategory(cleaned);
+  if (!subCategoryId) return null; // ✅ fallback yok
+
   const baseRecipe = MILK_DESSERT_RECIPES_BY_SUBCATEGORY[subCategoryId];
   if (!baseRecipe) return null;
+
   let mainIngredient = null;
   if (subCategoryId === "PUDDING") {
     if (cleaned.includes("kakao")) mainIngredient = "kakao";
     else if (cleaned.includes("çikolata")) mainIngredient = "çikolata";
   }
+
   const name = buildMilkDessertName({ subCategoryId, mainIngredient });
   const contextForSteps = { mainIngredient };
   const steps =
     typeof baseRecipe.steps === "function"
       ? baseRecipe.steps(contextForSteps)
       : [];
+
   const mainIngredientForSteps = mainIngredient ?? "malzemeler";
   const ingredients = buildFinalIngredients(baseRecipe, [
     mainIngredientForSteps,
   ]);
+
   return {
     category: "MILK_DESSERT",
     subCategoryId,
@@ -597,11 +609,15 @@ export function buildMilkDessertRecipe(rawIngredients) {
 
 function decidePastrySubCategory(cleaned) {
   if (cleaned.includes("yufka")) return "BOREK";
-  if (cleaned.includes("domates sosu") || cleaned.includes("mozzarella"))
+
+  // pizza için ideal: ikisi birden
+  if (cleaned.includes("domates sosu") && cleaned.includes("mozzarella"))
     return "PIZZA";
+
   if (cleaned.includes("maya") || cleaned.includes("kabartma tozu"))
     return "POGACA";
-  return "POGACA";
+
+  return null; // ✅ eskiden POGACA idi
 }
 
 function buildPastryName({ subCategoryId, mainIngredient }) {
@@ -627,35 +643,58 @@ export function buildPastryRecipe(rawIngredients) {
   const cleaned = rawIngredients
     .map(normalizeIngredient)
     .filter((i) => i.length > 0);
+
   if (!cleaned.length) return null;
+
+  // ✅ hamur işi için minimum şart: yufka ya da baking grubu ya da pizza ikilisi
+  const hasYufka = cleaned.includes("yufka");
+  const hasBaking =
+    cleaned.includes("un") ||
+    cleaned.includes("maya") ||
+    cleaned.includes("kabartma tozu");
+  const hasPizzaBase =
+    cleaned.includes("domates sosu") && cleaned.includes("mozzarella");
+
+  if (!hasYufka && !hasBaking && !hasPizzaBase) return null;
+
   const subCategoryId = decidePastrySubCategory(cleaned);
+  if (!subCategoryId) return null;
+
   const baseRecipe = PASTRY_RECIPES_BY_SUBCATEGORY[subCategoryId];
   if (!baseRecipe) return null;
+
   let mainIngredient = null;
+
   if (subCategoryId === "BOREK") {
     if (cleaned.includes("peynir")) mainIngredient = "peynir";
     else if (cleaned.includes("patates")) mainIngredient = "patates";
     else if (cleaned.includes("ıspanak")) mainIngredient = "ıspanak";
   }
+
   if (subCategoryId === "POGACA") {
     if (cleaned.includes("peynir")) mainIngredient = "peynir";
     else if (cleaned.includes("zeytin")) mainIngredient = "zeytin";
   }
+
   if (subCategoryId === "PIZZA") {
     if (cleaned.includes("sucuk")) mainIngredient = "sucuk";
     else if (cleaned.includes("mantar")) mainIngredient = "mantar";
   }
+
   const name = buildPastryName({ subCategoryId, mainIngredient });
   const contextForSteps = { mainIngredient };
+
   const steps =
     typeof baseRecipe.steps === "function"
       ? baseRecipe.steps(contextForSteps)
       : [];
+
   const mainIngredientForSteps = mainIngredient ?? "malzemeler";
 
   const ingredients = buildFinalIngredients(baseRecipe, [
     mainIngredientForSteps,
   ]);
+
   return {
     category: "PASTRY",
     subCategoryId,
