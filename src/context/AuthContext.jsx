@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const AuthContext = createContext(undefined);
@@ -18,17 +18,28 @@ export function AuthProvider({ children }) {
   const fetchProfile = async (userId) => {
     if (!userId) return null;
 
-    const { data, error } = await supabase
-      .from("profile")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    try {
+      const { data, error } = await withRetry(
+        () =>
+          supabase
+            .from("profile")
+            .select("*")
+            .eq("id", userId)
+            .single(),
+        2,
+        500,
+        8000
+      );
 
-    if (error) {
-      console.error("fetchProfile error:", error);
+      if (error) {
+        console.error("❌ fetchProfile error:", error);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.error("❌ fetchProfile unexpected error:", err);
       return null;
     }
-    return data;
   };
 
   useEffect(() => {
@@ -37,7 +48,7 @@ export function AuthProvider({ children }) {
     const init = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (!mounted) return;
-      if (error) console.error("getSession error:", error);
+      if (error) console.error("❌ getSession error:", error);
 
       const s = data?.session ?? null;
       const u = s?.user ?? null;
@@ -45,10 +56,15 @@ export function AuthProvider({ children }) {
       setSession(s);
       setUser(u);
 
-      // ✅ session varsa profile da çek
+      // ✅ session varsa profile da çek (non-blocking)
       if (u?.id) {
-        const p = await fetchProfile(u.id);
-        if (mounted) setProfile(p);
+        try {
+          const p = await fetchProfile(u.id);
+          if (mounted) setProfile(p);
+        } catch (err) {
+          console.error("⚠️ Profile fetch failed in init:", err);
+          if (mounted) setProfile(null);
+        }
       } else {
         setProfile(null);
       }
@@ -66,8 +82,13 @@ export function AuthProvider({ children }) {
         setUser(u);
 
         if (u?.id) {
-          const p = await fetchProfile(u.id);
-          setProfile(p);
+          try {
+            const p = await fetchProfile(u.id);
+            setProfile(p);
+          } catch (err) {
+            console.error("⚠️ Profile fetch failed in auth state change:", err);
+            setProfile(null);
+          }
         } else {
           setProfile(null);
         }
@@ -83,18 +104,40 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async ({ email, password }) => {
+    console.log("🔐 Attempting login...");
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) throw error;
+    
+    if (error) {
+      console.error("❌ Login error:", error);
+      throw error;
+    }
 
+    if (!data?.session || !data?.user) {
+      console.error("❌ Login succeeded but no session/user returned");
+      throw new Error("Giriş başarısız. Lütfen tekrar deneyin.");
+    }
+
+    console.log("✅ Login successful, setting session and user");
     setSession(data.session);
     setUser(data.user);
 
-    // ✅ login sonrası profile çek
-    const p = await fetchProfile(data.user?.id);
-    setProfile(p);
+    // ✅ login sonrası profile çek (non-blocking - hata olsa bile login başarılı)
+    try {
+      const p = await fetchProfile(data.user?.id);
+      if (p) {
+        setProfile(p);
+        console.log("✅ Profile loaded");
+      } else {
+        console.warn("⚠️ Profile not found, but login successful");
+      }
+    } catch (err) {
+      console.error("⚠️ Profile fetch failed, but login is still valid:", err);
+      // Profile fetch hatası login'i engellemesin
+    }
 
     return data;
   };

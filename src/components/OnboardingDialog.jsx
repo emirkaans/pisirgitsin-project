@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 
 import {
@@ -133,24 +133,43 @@ export default function OnboardingDialog() {
       setLoadingFeatured(true);
       setError("");
 
-      const { data, error } = await supabase
-        .from("recipe")
-        .select("id,name,image_url,likes_count,saves_count,views_count")
-        .eq("is_featured", true)
-        .order("saves_count", { ascending: false })
-        .order("likes_count", { ascending: false })
-        .order("views_count", { ascending: false })
-        .limit(15);
+      try {
+        console.log("🔍 Fetching featured recipes...");
+        
+        const { data, error } = await withRetry(
+          () =>
+            supabase
+              .from("recipe")
+              .select("id,name,image_url,likes_count,saves_count,views_count")
+              .eq("is_featured", true)
+              .order("saves_count", { ascending: false })
+              .limit(15),
+          2,
+          500,
+          8000
+        );
 
-      setLoadingFeatured(false);
+        if (error) {
+          console.error("❌ Error fetching featured recipes:", error);
+          setError(
+            error.message || "Tarifler yüklenemedi. Lütfen tekrar deneyin."
+          );
+          setFeaturedRecipes([]);
+          return;
+        }
 
-      if (error) {
-        console.error(error);
-        setError("Tarifler yüklenemedi.");
-        return;
+        console.log("✅ Featured recipes loaded:", data?.length || 0, "recipes");
+        setFeaturedRecipes(data ?? []);
+      } catch (err) {
+        console.error("❌ Unexpected error fetching featured recipes:", err);
+        setError(
+          err.message ||
+            "Tarifler yüklenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin."
+        );
+        setFeaturedRecipes([]);
+      } finally {
+        setLoadingFeatured(false);
       }
-
-      setFeaturedRecipes(data ?? []);
     };
 
     fetchFeatured();

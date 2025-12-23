@@ -134,13 +134,18 @@ function ResultsContent() {
         const ctx = buildRankContext(profile, recipeMetaById);
 
         const ranked = data
-          .map((r) => {
-            const { blended } = rankKeys(r, profile, ctx);
-            return { ...r, _score: blended };
-          })
-          .sort((a, b) => b._score - a._score);
+          .map((r) => ({
+            recipe: r,
+            keys: rankKeys(r, profile, ctx, searchTerms),
+          }))
+          .sort(
+            (a, b) =>
+              b.keys.matchCount - a.keys.matchCount ||
+              b.keys.blended - a.keys.blended
+          )
+          .map((x) => ({ ...x.recipe, ...x.keys }));
 
-        console.log({ ranked });
+        console.log(ranked.slice(0, 6));
         setFilteredRecipes(ranked);
 
         setIsLoading(false);

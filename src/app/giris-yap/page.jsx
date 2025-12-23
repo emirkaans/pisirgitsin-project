@@ -32,12 +32,30 @@ const LoginPage = () => {
       if (data) {
         toast.success("Giriş başarılı! Yönlendiriliyorsunuz...");
         setLoading(false);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        router.push("/");
+        // 3 saniye beklemek yerine hemen yönlendir
+        setTimeout(() => {
+          router.push("/");
+        }, 1000);
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Geçersiz e-posta veya şifre!");
+      console.error("❌ Login error:", error);
+      
+      // Daha detaylı hata mesajları
+      let errorMessage = "Giriş yapılamadı. Lütfen tekrar deneyin.";
+      
+      if (error?.message) {
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Geçersiz e-posta veya şifre!";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "E-posta adresinizi doğrulamanız gerekiyor.";
+        } else if (error.message.includes("Too many requests")) {
+          errorMessage = "Çok fazla deneme yaptınız. Lütfen bir süre sonra tekrar deneyin.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(errorMessage);
       setLoading(false);
     }
   };

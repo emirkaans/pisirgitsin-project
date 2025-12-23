@@ -17,6 +17,23 @@ function getTagSet(recipe) {
   return set;
 }
 
+function ingredientMatchCount(recipe, userIngredients = []) {
+  const user = (userIngredients ?? []).map(norm).filter(Boolean);
+  if (user.length === 0) return 0;
+
+  const recipeIngs = (recipe?.ingredients ?? [])
+    .map((x) => norm(x?.ingredient))
+    .filter(Boolean);
+
+  let hit = 0;
+
+  // basit ama etkili: “içeriyor mu” (domates salçası vs)
+  for (const u of user) {
+    if (recipeIngs.some((ri) => ri.includes(u))) hit++;
+  }
+  return hit;
+}
+
 function recipeHasAllergen(recipe, allergens) {
   const a = (allergens ?? []).map(norm).filter(Boolean);
   if (a.length === 0) return false;
@@ -42,7 +59,13 @@ function getStage(profile, coldStartEnd = 6, matureStart = 20) {
   const saved = Array.isArray(profile?.saved_recipe_ids)
     ? profile.saved_recipe_ids
     : [];
-  const engagement = fav.length + saved.length;
+  const viewed = Array.isArray(profile?.recent_viewed_recipe_ids)
+    ? profile.recent_viewed_recipe_ids
+    : [];
+
+  const viewedCap = Math.min(viewed.length, 40);
+  const engagement = fav.length + saved.length + viewedCap * 0.25;
+
   return clamp01((engagement - coldStartEnd) / (matureStart - coldStartEnd));
 }
 
@@ -107,15 +130,11 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
 
   // Ağırlıklar (popüler fonksiyondaki mantığın aynısı)
   const W = {
-    // history uyumu
-    affinity: lerp(40, 90, stage),
+    affinity: lerp(1.0, 2.8, stage),
+    onboardingCat: lerp(1.4, 0.1, stage),
+    dietPenalty: lerp(1.2, 0.0, stage),
 
-    // cold yardımları (zamanla söner)
-    onboardingCat: lerp(1.2, 0.1, stage),
     dietBonus: lerp(0.8, 0.0, stage),
-
-    // diyet penalty: cold’da çok güçlü, mature’da 0
-    dietPenalty: lerp(9999, 0.0, stage),
 
     // popülerlik ile kişisel skor harmanı
     wPersonal: lerp(1.0, 0.7, stage),
@@ -150,7 +169,7 @@ export function personalScore(recipe, profile, ctx) {
   // 1) History-based affinity (asıl sinyal)
   const aff = affinityFromProfile(recipe, tagProfile);
   score += aff * W.affinity;
-
+  console.log({ aff });
   // 2) Cold-start boosts (zamanla söner)
   const tags = getTagSet(recipe);
 
@@ -165,20 +184,27 @@ export function personalScore(recipe, profile, ctx) {
   score += dietBonusHit * W.dietBonus;
   score -= dietBlocked * W.dietPenalty;
 
-  // 3) Allergens (sabit güçlü ceza)
   const allergens = Array.isArray(profile?.allergens) ? profile.allergens : [];
-  if (recipeHasAllergen(recipe, allergens)) score -= 9999; // veya -2 değil, gerçek “hard’a yakın”
-  // Eğer "hard filter" istiyorsan: bunu burada yapma; caller tarafında filtrele.
+
+  const cookForOthers = true; // ctx’ye opts ekleyeceğiz
+  if (recipeHasAllergen(recipe, allergens)) score -= cookForOthers ? 0.0 : 1.2;
 
   return score;
 }
 
-export function rankKeys(recipe, profile, ctx) {
+export function rankKeys(recipe, profile, ctx, userIngredients = []) {
   const p = personalScore(recipe, profile, ctx);
   const pop = popularityScore(recipe);
 
-  // stage ile harman
   const blended = p * ctx.W.wPersonal + pop * ctx.W.wPop;
 
-  return { personal: p, popularity: pop, blended, stage: ctx.stage };
+  const matchCount = ingredientMatchCount(recipe, userIngredients);
+
+  return {
+    personal: p,
+    popularity: pop,
+    blended,
+    stage: ctx.stage,
+    matchCount,
+  };
 }
