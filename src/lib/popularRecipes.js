@@ -1,5 +1,5 @@
 import { DIET_BONUS_MAP, DIET_BLOCK_MAP } from "@/constants/constants";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 
 const norm = (s) =>
   String(s || "")
@@ -123,27 +123,56 @@ export async function getPopularRecipes({
     excludeKnown ? [...favIds, ...savedIds, ...viewIds] : []
   );
 
-  // --- 1) History meta çek (fav/saved/view) ---
+  // --- 1) History meta çek (fav/saved/view) - optimize: daha az ID, daha hızlı ---
   const historyIds = Array.from(
     new Set([...favIds, ...savedIds, ...viewIds])
-  ).slice(0, 200);
+  ).slice(0, 50); // 200'den 50'ye düşürdük - yeterli
 
-  let historyMeta = [];
-  if (historyIds.length) {
-    const { data, error } = await supabase
-      .from("recipe")
-      .select("id,main_category,sub_categories")
-      .in("id", historyIds);
+  // --- 2) Paralel istekler: history meta ve pool aynı anda çek ---
+  const [historyResult, poolResult] = await Promise.all([
+    // History meta (eğer varsa)
+    historyIds.length > 0
+      ? withRetry(
+          () =>
+            supabase
+              .from("recipe")
+              .select("id,main_category,sub_categories")
+              .in("id", historyIds),
+          2,
+          300, // Daha hızlı retry
+          5000 // Daha kısa timeout
+        )
+      : Promise.resolve({ data: [], error: null }),
+    // Global popüler havuzu
+    withRetry(
+      () =>
+        supabase
+          .from("recipe")
+          .select(
+            "id,name,image_url,main_category,sub_categories,ingredients,saves_count,likes_count,views_count,time_in_minutes,difficulty"
+          )
+          .order("saves_count", { ascending: false })
+          .order("likes_count", { ascending: false })
+          .order("views_count", { ascending: false })
+          .limit(Math.min(poolLimit, 100)), // 250'den 100'e düşürdük - yeterli
+      2,
+      300,
+      5000
+    ),
+  ]);
+  console.log({ historyResult });
 
-    if (error) throw error;
-    historyMeta = data ?? [];
-  }
+  if (historyResult.error) throw historyResult.error;
+  if (poolResult.error) throw poolResult.error;
+
+  const historyMeta = historyResult.data ?? [];
+  const pool = poolResult.data ?? [];
 
   const favMeta = historyMeta.filter((r) => favIds.includes(r.id));
   const savedMeta = historyMeta.filter((r) => savedIds.includes(r.id));
   const viewMeta = historyMeta.filter((r) => viewIds.includes(r.id));
 
-  // --- 2) Kategori profili oluştur (asıl kişiselleştirme burada) ---
+  // --- 3) Kategori profili oluştur (asıl kişiselleştirme burada) ---
   const tagProfile = buildCategoryProfileFromHistory({
     favMeta,
     savedMeta,
@@ -151,12 +180,12 @@ export async function getPopularRecipes({
     viewIds, // en yeni -> en eski
   });
 
-  // --- 3) Cold’ta onboarding + diet küçük katkı; mature’da sıfıra yaklaşır ---
+  // --- 4) Cold'ta onboarding + diet küçük katkı; mature'da sıfıra yaklaşır ---
   const W = {
     profileCats: lerp(1.2, 0.1, stage), // cold güçlü, mature çok zayıf
     dietBonus: lerp(0.8, 0.0, stage), // diyet zamanla unutulsun
-    dietPenalty: lerp(9999, 0.0, stage), // cold’ta neredeyse block, mature’da 0
-    affinity: lerp(40, 90, stage), // mature’da kişisel uyum daha baskın
+    dietPenalty: lerp(9999, 0.0, stage), // cold'ta neredeyse block, mature'da 0
+    affinity: lerp(40, 90, stage), // mature'da kişisel uyum daha baskın
   };
 
   const dietBonusTags = diets
@@ -165,19 +194,6 @@ export async function getPopularRecipes({
   const dietBlockTags = diets
     .flatMap((d) => DIET_BLOCK_MAP?.[d] ?? [])
     .map(norm);
-
-  // --- 4) Global popüler havuzu çek ---
-  const { data: pool, error: poolErr } = await supabase
-    .from("recipe")
-    .select(
-      "id,name,image_url,main_category,sub_categories,ingredients,saves_count,likes_count,views_count,time_in_minutes"
-    )
-    .order("saves_count", { ascending: false })
-    .order("likes_count", { ascending: false })
-    .order("views_count", { ascending: false })
-    .limit(poolLimit);
-
-  if (poolErr) throw poolErr;
 
   // --- 5) Skorla ---
   const scored = [];

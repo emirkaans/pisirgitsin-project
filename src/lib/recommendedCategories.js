@@ -38,6 +38,7 @@ export function getTopCategories({
   coldStartEnd = 6, // fav+saved bu değerin altındaysa onboarding/diet daha etkili
   matureStart = 20, // fav+saved bu değere gelince “mature”
 } = {}) {
+  console.log({ favoriteRecipes, profile });
   // --------- normalize profile ----------
   const userCategories = Array.isArray(profile?.categories)
     ? profile.categories
@@ -133,6 +134,8 @@ export function getTopCategories({
     for (const sc of subs) {
       if (sc && score.has(sc)) add(sc, W.favSub);
     }
+
+    console.log({ main, subs });
   }
 
   // --------- 9) Recent viewed -> recency decay ----------

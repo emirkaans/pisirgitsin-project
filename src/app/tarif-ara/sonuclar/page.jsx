@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 
@@ -32,14 +32,20 @@ function getHistoryRecipeIds(profile) {
 async function fetchRecipeMetaByIds(ids, supabase) {
   if (!ids || ids.length === 0) return {};
 
-  const { data, error } = await supabase
-    .from("recipe")
-    .select("id, main_category, sub_categories")
-    .in("id", ids);
+  const { data, error } = await withRetry(
+    () =>
+      supabase
+        .from("recipe")
+        .select("id, main_category, sub_categories")
+        .in("id", ids),
+    2,
+    500,
+    8000
+  );
 
   if (error) throw error;
 
-  // map’e çevir
+  // map'e çevir
   const map = {};
   for (const r of data ?? []) {
     map[r.id] = {
@@ -103,16 +109,27 @@ function ResultsContent() {
           return;
         }
 
-        const { data, error } = await supabase.rpc("search_recipes_by_terms", {
-          terms: searchTerms,
-          lim: 150,
-          off: 0,
-        });
+        // Paralel istekler: arama ve meta aynı anda çek
+        const [searchResult, metaResult] = await Promise.all([
+          withRetry(
+            () =>
+              supabase.rpc("search_recipes_by_terms", {
+                terms: searchTerms,
+                lim: 100, // 150'den 100'e düşürdük
+                off: 0,
+              }),
+            2,
+            300,
+            5000
+          ),
+          buildRecipeMetaById(profile, supabase),
+        ]);
 
+        const { data, error } = searchResult;
         console.log({ data });
         if (error) throw error;
 
-        const recipeMetaById = await buildRecipeMetaById(profile, supabase);
+        const recipeMetaById = metaResult;
 
         const ctx = buildRankContext(profile, recipeMetaById);
 
@@ -129,7 +146,10 @@ function ResultsContent() {
         setIsLoading(false);
       } catch (err) {
         console.error(err);
-        setError("Tarifler yüklenirken bir hata oluştu");
+        setError(
+          err.message ||
+            "Tarifler yüklenirken bir hata oluştu. Lütfen tekrar deneyin."
+        );
         setIsLoading(false);
       }
     };
@@ -141,8 +161,14 @@ function ResultsContent() {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center text-red-500">
-            <p>{error}</p>
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Tekrar Dene
+            </button>
           </div>
         </div>
       </div>
@@ -160,11 +186,12 @@ function ResultsContent() {
         </h1>
 
         {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="relative">
+          <div className="flex flex-col justify-center items-center py-20">
+            <div className="relative mb-4">
               <div className="w-12 h-12 border-4 border-green-200 rounded-full"></div>
               <div className="w-12 h-12 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
             </div>
+            <p className="text-gray-600 text-sm">Tarifler yükleniyor...</p>
           </div>
         ) : filteredRecipes.length === 0 ? (
           <div className="text-center py-12">

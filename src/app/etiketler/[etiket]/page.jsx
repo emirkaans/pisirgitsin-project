@@ -2,9 +2,10 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 // import recipes from "@/lib/api.json";
 import { IconArrowLeft } from "@tabler/icons-react";
+import { useState, useEffect } from "react";
 
 const EtiketSayfasi = () => {
   const params = useParams();
@@ -15,14 +16,26 @@ const EtiketSayfasi = () => {
 
   useEffect(() => {
     const fetchRecipes = async () => {
-      const { data, error } = await supabase
-        .from("recipe")
-        .select("*")
+      try {
+        const { data, error: fetchError } = await withRetry(
+          () => supabase.from("recipe").select("*"),
+          2,
+          500,
+          8000
+        );
 
-      if (error) {
-        setFetchError(error.message || "Veri alınamadı");
-      } else {
-        setRecipes(Array.isArray(data) ? data : []);
+        if (fetchError) {
+          setFetchError(
+            fetchError.message || "Veri alınamadı. Lütfen tekrar deneyin."
+          );
+        } else {
+          setRecipes(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        setFetchError(
+          err.message ||
+            "Tarifler yüklenirken beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin."
+        );
       }
     };
 
@@ -54,7 +67,17 @@ const EtiketSayfasi = () => {
           "{etiket}" tarifler
         </h1>
 
-        {etiketliTarifler.length === 0 ? (
+        {fetchError ? (
+          <div className="text-center py-12">
+            <p className="text-red-600 mb-4">{fetchError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Tekrar Dene
+            </button>
+          </div>
+        ) : etiketliTarifler.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600">Bu etikete sahip tarif bulunamadı.</p>
           </div>

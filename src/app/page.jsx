@@ -12,26 +12,85 @@ import { getPopularRecipes } from "@/lib/popularRecipes";
 
 export default function Home() {
   const { profile } = useAuth();
-  const { favoriteRecipes } = useFavorites();
+  const { favoriteRecipes, fetchFavoriteRecipes } = useFavorites();
   const router = useRouter();
 
   const [categories, setCategories] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [recipesError, setRecipesError] = useState(null);
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
+
   useEffect(() => {
-    if (!profile) return;
-    const top4 = getTopCategories({
-      profile,
-      favoriteRecipes,
-      now: new Date(),
-    });
+    if (!profile) {
+      setCategories([]);
+      setRecipes([]);
+      return;
+    }
 
-    const userCategories = categoriesSet.filter((cat) =>
-      top4.includes(cat.name)
-    );
+    // Paralel istekler: favori tarifler ve popüler tarifler aynı anda çek
+    setIsLoadingRecipes(true);
+    setRecipesError(null);
 
-    setCategories(userCategories);
-    getPopularRecipes({ profile, limit: 3 }).then(setRecipes);
-  }, [profile]);
+    Promise.allSettled([
+      fetchFavoriteRecipes(),
+      getPopularRecipes({ profile, limit: 3 }),
+    ])
+      .then(([favoritesResult, recipesResult]) => {
+        // Favori tarifler sonucu
+        const favRecipes =
+          favoritesResult.status === "fulfilled"
+            ? favoritesResult.value
+            : [];
+
+        if (favoritesResult.status === "rejected") {
+          console.error(
+            "Error fetching favorite recipes:",
+            favoritesResult.reason
+          );
+        }
+
+        // Kategorileri hesapla
+        try {
+          const top4 = getTopCategories({
+            profile,
+            favoriteRecipes: favRecipes,
+            now: new Date(),
+          });
+
+          const userCategories = categoriesSet.filter((cat) =>
+            top4.includes(cat.name)
+          );
+
+          setCategories(userCategories);
+        } catch (err) {
+          console.error("Error getting top categories:", err);
+          setCategories([]);
+        }
+
+        // Popüler tarifler sonucu
+        if (recipesResult.status === "fulfilled") {
+          setRecipes(recipesResult.value);
+          setIsLoadingRecipes(false);
+        } else {
+          console.error(
+            "Error loading popular recipes:",
+            recipesResult.reason
+          );
+          setRecipesError(
+            recipesResult.reason?.message ||
+              "Popüler tarifler yüklenirken bir hata oluştu"
+          );
+          setRecipes([]);
+          setIsLoadingRecipes(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Unexpected error:", err);
+        setRecipesError("Beklenmeyen bir hata oluştu");
+        setRecipes([]);
+        setIsLoadingRecipes(false);
+      });
+  }, [profile, fetchFavoriteRecipes]);
 
   const heroSlides = [
     {
@@ -220,36 +279,62 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recipes.map((recipe) => {
-              return (
-                <Link
-                  key={recipe.id}
-                  href={`/tarif/${recipe.id}`}
-                  className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition duration-300"
-                >
-                  <div className="relative h-48">
-                    <img
-                      src={recipe.image_url}
-                      alt={recipe.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-xl text-stone-900 font-semibold mb-2">
-                      {recipe.name}
-                    </h3>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span className="mr-3">
-                        ⏱ {recipe.time_in_minutes} dk
-                      </span>
-                      <span>💪 {recipe.difficulty}</span>
+          {isLoadingRecipes ? (
+            <div className="flex flex-col justify-center items-center py-20">
+              <div className="relative mb-4">
+                <div className="w-12 h-12 border-4 border-green-200 rounded-full"></div>
+                <div className="w-12 h-12 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
+              </div>
+              <p className="text-gray-600 text-sm">
+                Popüler tarifler yükleniyor...
+              </p>
+            </div>
+          ) : recipesError ? (
+            <div className="text-center py-12">
+              <p className="text-red-600 mb-4">{recipesError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Tekrar Dene
+              </button>
+            </div>
+          ) : recipes.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Henüz popüler tarif bulunmuyor.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {recipes.map((recipe) => {
+                return (
+                  <Link
+                    key={recipe.id}
+                    href={`/tarif/${recipe.id}`}
+                    className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition duration-300"
+                  >
+                    <div className="relative h-48">
+                      <img
+                        src={recipe.image_url}
+                        alt={recipe.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                    <div className="p-4">
+                      <h3 className="text-xl text-stone-900 font-semibold mb-2">
+                        {recipe.name}
+                      </h3>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span className="mr-3">
+                          ⏱ {recipe.time_in_minutes} dk
+                        </span>
+                        <span>💪 {recipe.difficulty}</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

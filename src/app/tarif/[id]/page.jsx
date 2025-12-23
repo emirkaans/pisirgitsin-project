@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import {
   IconHeart,
@@ -47,6 +47,7 @@ const RecipeDetail = () => {
 
   const [recipe, setRecipe] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [userRating, setUserRating] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
@@ -58,71 +59,130 @@ const RecipeDetail = () => {
   const allergenMatches = findAllergenMatches(recipe, profile?.allergens);
 
   useEffect(() => {
-    if (recipeId == null) return;
+    if (recipeId == null) {
+      setIsLoading(false);
+      setError("Geçersiz tarif ID");
+      return;
+    }
 
     let mounted = true;
     setIsLoading(true);
+    setError(null);
+
+    console.log(`📥 Loading recipe ${recipeId}...`);
 
     (async () => {
-      // ✅ 1) Tarifi DB’den çek
-      const { data, error } = await supabase
-        .from("recipe")
-        .select(
-          "id,name,image_url,main_category,sub_categories,ingredients,instructions,labels,time_in_minutes,difficulty,likes_count,saves_count,views_count"
-        )
-        .eq("id", recipeId)
-        .single();
-      if (!mounted) return;
+      try {
+        // Supabase client kontrolü
+        if (!supabase) {
+          throw new Error("Supabase bağlantısı kurulamadı");
+        }
 
-      if (error) {
-        console.error("recipe fetch error:", error);
+        // ✅ 1) Tarifi DB'den çek (retry ve timeout ile)
+        console.log(`🔍 Fetching recipe ${recipeId} from database...`);
+        const startTime = Date.now();
+        
+        const { data, error: fetchError } = await withRetry(
+          () =>
+            supabase
+              .from("recipe")
+              .select(
+                "id,name,image_url,main_category,sub_categories,ingredients,instructions,labels,time_in_minutes,difficulty,likes_count,saves_count,views_count"
+              )
+              .eq("id", recipeId)
+              .single(),
+          2, // maxRetries (daha az deneme)
+          500, // delayMs (daha hızlı retry)
+          8000 // timeoutMs (8 saniye - daha makul)
+        );
+
+        const duration = Date.now() - startTime;
+        console.log(`⏱️ Recipe fetch completed in ${duration}ms`);
+
+        if (!mounted) {
+          console.log("⚠️ Component unmounted, ignoring result");
+          return;
+        }
+
+        if (fetchError) {
+          console.error("❌ Recipe fetch error:", fetchError);
+          setError(
+            fetchError.message ||
+              "Tarif yüklenirken bir hata oluştu. Lütfen tekrar deneyin."
+          );
+          setRecipe(null);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!data) {
+          console.warn(`⚠️ Recipe ${recipeId} not found`);
+          setError("Tarif bulunamadı.");
+          setRecipe(null);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log(`✅ Recipe ${recipeId} loaded successfully`);
+
+        // jsonb alanları güvenli hale getir
+        const normalized = {
+          ...data,
+          sub_categories: safeJsonArray(data?.sub_categories),
+          ingredients: safeJsonArray(data?.ingredients),
+          instructions: safeJsonArray(data?.instructions),
+          labels: safeJsonArray(data?.labels),
+        };
+
+        setRecipe(normalized);
+
+        // ✅ 2) rating localStorage (mevcut kodunu koruyoruz)
+        try {
+          const savedRatings = JSON.parse(
+            localStorage.getItem("recipeRatings") || "{}"
+          );
+          const recipeRatings = savedRatings[recipeId] || [];
+          if (recipeRatings.length > 0) {
+            const avg =
+              recipeRatings.reduce((a, b) => a + b, 0) / recipeRatings.length;
+            setAverageRating(avg);
+            setTotalRatings(recipeRatings.length);
+          } else {
+            setAverageRating(0);
+            setTotalRatings(0);
+          }
+
+          if (isUserLoggedIn) {
+            const userRatings = JSON.parse(
+              localStorage.getItem("userRatings") || "{}"
+            );
+            setUserRating(userRatings[recipeId] || 0);
+          } else {
+            setUserRating(0);
+          }
+        } catch (localStorageError) {
+          console.error("localStorage error:", localStorageError);
+          // localStorage hatası kritik değil, devam et
+        }
+
+        setIsLoading(false);
+      } catch (err) {
+        if (!mounted) return;
+        console.error("Unexpected error:", err);
+        setError(
+          err.message ||
+            "Tarif yüklenirken beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin."
+        );
         setRecipe(null);
         setIsLoading(false);
-        return;
       }
-
-      // jsonb alanları güvenli hale getir
-      const normalized = {
-        ...data,
-        sub_categories: safeJsonArray(data?.sub_categories),
-        ingredients: safeJsonArray(data?.ingredients),
-        instructions: safeJsonArray(data?.instructions),
-        labels: safeJsonArray(data?.labels),
-      };
-
-      setRecipe(normalized);
-
-      // ✅ 2) rating localStorage (mevcut kodunu koruyoruz)
-      const savedRatings = JSON.parse(
-        localStorage.getItem("recipeRatings") || "{}"
-      );
-      const recipeRatings = savedRatings[recipeId] || [];
-      if (recipeRatings.length > 0) {
-        const avg =
-          recipeRatings.reduce((a, b) => a + b, 0) / recipeRatings.length;
-        setAverageRating(avg);
-        setTotalRatings(recipeRatings.length);
-      } else {
-        setAverageRating(0);
-        setTotalRatings(0);
-      }
-
-      if (isUserLoggedIn) {
-        const userRatings = JSON.parse(
-          localStorage.getItem("userRatings") || "{}"
-        );
-        setUserRating(userRatings[recipeId] || 0);
-      } else {
-        setUserRating(0);
-      }
-
-      setIsLoading(false);
     })();
 
     return () => {
+      console.log(`🧹 Cleaning up recipe ${recipeId} effect`);
       mounted = false;
     };
-  }, [recipeId, isUserLoggedIn]);
+  }, [recipeId]); // isUserLoggedIn'i kaldırdık - gereksiz re-render'a sebep oluyordu
 
   const handleRating = (rating) => {
     if (!isUserLoggedIn) {
@@ -183,30 +243,46 @@ const RecipeDetail = () => {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          <div className="flex justify-center items-center py-20">
-            <div className="relative">
+          <div className="flex flex-col justify-center items-center py-20">
+            <div className="relative mb-4">
               <div className="w-12 h-12 border-4 border-green-200 rounded-full"></div>
               <div className="w-12 h-12 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
             </div>
+            <p className="text-gray-600 text-sm">Tarif yükleniyor...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!recipe) {
+  if (error || !recipe) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Tarif bulunamadı
+            {error || "Tarif bulunamadı"}
           </h1>
-          <button
-            onClick={() => router.back()}
-            className="text-green-600 hover:text-green-700"
-          >
-            ← Geri Dön
-          </button>
+          <div className="flex flex-col gap-4 items-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                // useEffect'i tetiklemek için recipeId'yi değiştirip geri al
+                const currentId = recipeId;
+                // Force re-fetch by updating state
+                window.location.reload();
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Tekrar Dene
+            </button>
+            <button
+              onClick={() => router.back()}
+              className="text-green-600 hover:text-green-700"
+            >
+              ← Geri Dön
+            </button>
+          </div>
         </div>
       </div>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import {
   createContext,
   useContext,
@@ -136,10 +136,16 @@ export function FavoritesProvider({ children }) {
     }
 
     // ✅ tablo adı "recipe"
-    const { data, error: rErr } = await supabase
-      .from("recipe")
-      .select("*")
-      .in("id", favoriteIds);
+    const { data, error: rErr } = await withRetry(
+      () =>
+        supabase
+          .from("recipe")
+          .select("*")
+          .in("id", favoriteIds),
+      2,
+      500,
+      8000
+    );
 
     if (rErr) {
       setError(rErr);

@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 // import recipes from "@/lib/api.json";
 import { IconArrowLeft } from "@tabler/icons-react";
 import { useState, useEffect, Suspense } from "react";
@@ -18,12 +18,26 @@ const SearchResults = () => {
 
   useEffect(() => {
     const fetchRecipes = async () => {
-      const { data, error } = await supabase.from("recipe").select("*");
+      try {
+        const { data, error: fetchError } = await withRetry(
+          () => supabase.from("recipe").select("*"),
+          2,
+          500,
+          8000
+        );
 
-      if (error) {
-        setFetchError(error.message || "Veri alınamadı");
-      } else {
-        setRecipes(Array.isArray(data) ? data : []);
+        if (fetchError) {
+          setFetchError(
+            fetchError.message || "Veri alınamadı. Lütfen tekrar deneyin."
+          );
+        } else {
+          setRecipes(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        setFetchError(
+          err.message ||
+            "Tarifler yüklenirken beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin."
+        );
       }
     };
 
@@ -101,12 +115,23 @@ const SearchResults = () => {
           )}
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="relative">
+        {fetchError ? (
+          <div className="text-center py-12">
+            <p className="text-red-600 mb-4">{fetchError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Tekrar Dene
+            </button>
+          </div>
+        ) : isLoading ? (
+          <div className="flex flex-col justify-center items-center py-20">
+            <div className="relative mb-4">
               <div className="w-12 h-12 border-4 border-green-200 rounded-full"></div>
               <div className="w-12 h-12 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
             </div>
+            <p className="text-gray-600 text-sm">Tarifler yükleniyor...</p>
           </div>
         ) : searchResults.length === 0 ? (
           <div className="text-center py-12">

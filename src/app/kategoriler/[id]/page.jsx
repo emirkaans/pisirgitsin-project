@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -33,6 +33,7 @@ const CategoryRecipes = () => {
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [categoryRecipes, setCategoryRecipes] = useState([]);
   const [categoryName, setCategoryName] = useState("");
+  const [error, setError] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -43,6 +44,7 @@ const CategoryRecipes = () => {
 
     async function load() {
       setIsLoading(true);
+      setError(null);
 
       const category = categories.find((c) => c.id === categoryId);
       setCategoryName(category?.name ?? "");
@@ -53,22 +55,42 @@ const CategoryRecipes = () => {
         return;
       }
 
-      const json = JSON.stringify([category.name]);
+      try {
+        const json = JSON.stringify([category.name]);
 
-      const { data, error } = await supabase
-        .from("recipe")
-        .select(
-          "id,name,image_url,ingredients,main_category,sub_categories,time_in_minutes"
-        )
-        .or(`main_category.eq.${category.name},sub_categories.cs.${json}`);
-      console.log({ data });
-      if (cancelled) return;
+        const { data, error: fetchError } = await withRetry(
+          () =>
+            supabase
+              .from("recipe")
+              .select(
+                "id,name,image_url,ingredients,main_category,sub_categories,time_in_minutes"
+              )
+              .or(`main_category.eq.${category.name},sub_categories.cs.${json}`),
+          2,
+          500,
+          8000
+        );
 
-      if (error) {
-        console.error("category recipes error:", error);
+        if (cancelled) return;
+
+        if (fetchError) {
+          console.error("category recipes error:", fetchError);
+          setError(
+            fetchError.message ||
+              "Tarifler yüklenirken bir hata oluştu. Lütfen tekrar deneyin."
+          );
+          setCategoryRecipes([]);
+        } else {
+          setCategoryRecipes(data ?? []);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Unexpected error:", err);
+        setError(
+          err.message ||
+            "Tarifler yüklenirken beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin."
+        );
         setCategoryRecipes([]);
-      } else {
-        setCategoryRecipes(data ?? []);
       }
 
       setIsLoading(false);
@@ -85,11 +107,22 @@ const CategoryRecipes = () => {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="relative">
+          <div className="flex flex-col justify-center items-center py-20">
+            <div className="relative mb-4">
               <div className="w-12 h-12 border-4 border-green-200 rounded-full"></div>
               <div className="w-12 h-12 border-4 border-green-500 rounded-full absolute top-0 left-0 animate-spin border-t-transparent"></div>
             </div>
+            <p className="text-gray-600 text-sm">Tarifler yükleniyor...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Tekrar Dene
+            </button>
           </div>
         ) : (
           <>
