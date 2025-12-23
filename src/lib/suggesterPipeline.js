@@ -6,10 +6,11 @@ import {
   buildVegetableDishCandidates,
   buildMeatDishCandidates,
   buildChickenDishCandidates,
+  buildSeafoodDishCandidates,
   buildPastryCandidates,
   buildMilkDessertCandidates,
 } from "@/lib/builders";
-import { enrichCandidate } from "@/lib/enrichCandidates";
+import { enrichCandidate, INSTRUCTION_BUILDERS } from "@/lib/enrichCandidates";
 
 // ---------- core helpers ----------
 const norm = (s) =>
@@ -18,6 +19,13 @@ const norm = (s) =>
     .trim();
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const lerp = (a, b, t) => a + (b - a) * t;
+function toArray(v) {
+  if (!v) return [];
+  return Array.isArray(v) ? v : Array.from(v); // Set/iterable → array
+}
+function uniq(arr) {
+  return Array.from(new Set(toArray(arr).map(norm))).filter(Boolean);
+}
 
 function getStage(profile, coldStartEnd = 6, matureStart = 20) {
   const fav = Array.isArray(profile?.favorite_recipe_ids)
@@ -26,7 +34,14 @@ function getStage(profile, coldStartEnd = 6, matureStart = 20) {
   const saved = Array.isArray(profile?.saved_recipe_ids)
     ? profile.saved_recipe_ids
     : [];
-  const engagement = fav.length + saved.length;
+  const viewed = Array.isArray(profile?.recent_viewed_recipe_ids)
+    ? profile.recent_viewed_recipe_ids
+    : [];
+
+  // viewed etkisi: düşük ağırlık + cap (sonsuz şişmesin)
+  const viewedCap = Math.min(viewed.length, 40);
+  const engagement = fav.length + saved.length + viewedCap * 0.25;
+
   return clamp01((engagement - coldStartEnd) / (matureStart - coldStartEnd));
 }
 
@@ -38,6 +53,19 @@ function recipeHasAllergenByStrings(ingredientStrings, allergens) {
   return list.some((ing) =>
     a.some((al) => ing.includes(al) || al.includes(ing))
   );
+}
+
+function getIngredientStringsForAllergenCheck(candidate) {
+  const arr =
+    candidate.required_ingredients ??
+    candidate.used_ingredients ??
+    candidate.ingredients ??
+    [];
+
+  // Eğer recipe objesi gelirse: [{ingredient: "..."}, ...] olabilir
+  return arr
+    .map((x) => (typeof x === "string" ? x : x?.ingredient))
+    .filter(Boolean);
 }
 
 function tagSetFromCandidate(c) {
@@ -55,32 +83,42 @@ function affinityFromProfile(tagSet, tagProfile) {
 }
 
 export function enrichCandidateWithInstructions(candidate) {
-  const c = {
-    ...candidate,
-    required_ingredients: uniq(
-      candidate.required_ingredients ?? candidate.used_ingredients ?? []
-    ),
-    base_ingredients: uniq(candidate.base_ingredients ?? []),
-    optional_ingredients: uniq(candidate.optional_ingredients ?? []),
-  };
+  const safeIngs = uniq(
+    (
+      candidate.used_ingredients ??
+      candidate.required_ingredients ??
+      candidate.ingredients ??
+      []
+    )
+      .map((x) => (typeof x === "string" ? x : x?.ingredient))
+      .filter(Boolean)
+  );
 
-  if (c.main_category === "Çorbalar")
-    return { ...c, ...buildSoupInstructions(c) };
-  if (c.main_category === "Makarna")
-    return { ...c, ...buildPastaInstructions(c) };
+  // zaten instruction varsa ve boş değilse dokunma (en güvenlisi)
+  if (
+    Array.isArray(candidate.instructions) &&
+    candidate.instructions.length > 0
+  ) {
+    return { ...candidate, used_ingredients: safeIngs };
+  }
 
-  // fallback
+  const key = getCandidateCategoryKey(candidate);
+  const builder = key ? INSTRUCTION_BUILDERS[key] : null;
+
+  let instructions = null;
+
+  if (typeof builder === "function") {
+    instructions = builder(safeIngs);
+  }
+
+  if (!Array.isArray(instructions) || instructions.length === 0) {
+    instructions = buildGenericInstructions(safeIngs);
+  }
+
   return {
-    ...c,
-    time: { prepMin: 10, cookMin: 20 },
-    tips: [
-      "Malzemeleri hazırlayıp pişirme adımlarını kategoriye göre uygulayın.",
-    ],
-    instructions: [
-      "Malzemeleri hazırla.",
-      "Uygun pişirme tekniğini uygula.",
-      "Tatlandırıp servis et.",
-    ],
+    ...candidate,
+    used_ingredients: safeIngs,
+    instructions,
   };
 }
 
@@ -144,33 +182,55 @@ export function buildSuggestContext(profile, recipeMetaById = {}, opts = {}) {
 }
 
 function ingredientCoverageScore(candidate, userIngredients) {
-  const user = new Set((userIngredients ?? []).map(norm));
-  if (user.size === 0) return 0;
-
   const used = new Set(
-    (candidate.used_ingredients ?? candidate.ingredients ?? []).map(norm)
+    (
+      candidate.required_ingredients ??
+      candidate.used_ingredients ??
+      candidate.ingredients ??
+      []
+    )
+      .map((x) => (typeof x === "string" ? x : x?.ingredient))
+      .filter(Boolean)
+      .map(norm)
   );
+
+  const user = new Set([...userIngredients].map(norm));
+
+  if (used.size === 0 || user.size === 0) return 0;
+
   let hit = 0;
-  for (const u of user) if (used.has(u)) hit++;
-  return hit / user.size; // 0..1
+  for (const ing of used) if (user.has(ing)) hit++;
+
+  // F1-like: 2*hit / (|user| + |used|)
+  return (2 * hit) / (user.size + used.size);
 }
 
-export function scoreCandidate(candidate, profile, ctx, userIngredients) {
-  // allergen hard filter
+export function scoreCandidate(
+  candidate,
+  profile,
+  ctx,
+  userIngredients,
+  opts = {}
+) {
   const allergens = Array.isArray(profile?.allergens) ? profile.allergens : [];
-  if (recipeHasAllergenByStrings(candidate.ingredients, allergens))
-    return -9999;
+
+  const ingStrings = getIngredientStringsForAllergenCheck(candidate);
+  const hasAllergen = recipeHasAllergenByStrings(ingStrings, allergens);
+
+  // "başkası için pişiriyorum" modunda alerjen cezası ya çok düşük ya da 0
+  const cookForOthers = !!opts.cookForOthers;
+  const allergenPenalty = hasAllergen ? (cookForOthers ? 0.0 : 1.2) : 0.0;
 
   const tags = tagSetFromCandidate(candidate);
   const aff = affinityFromProfile(tags, ctx.tagProfile);
-
   const onboardingHit = [...ctx.onboardingSet].some((c) => tags.has(c)) ? 1 : 0;
   const cov = ingredientCoverageScore(candidate, userIngredients);
 
   return (
     aff * ctx.W.affinity +
     onboardingHit * ctx.W.onboarding +
-    cov * ctx.W.ingredient
+    cov * ctx.W.ingredient -
+    allergenPenalty
   );
 }
 
@@ -182,6 +242,7 @@ const CATEGORY_TO_BUILDER = {
   VEGETABLE_DISH: buildVegetableDishCandidates,
   MEAT_DISH: buildMeatDishCandidates,
   CHICKEN_DISH: buildChickenDishCandidates,
+  SEAFOOD_DISH: buildSeafoodDishCandidates,
   PASTRY: buildPastryCandidates,
   MILK_DESSERT: buildMilkDessertCandidates,
 };
@@ -203,10 +264,12 @@ export function generateAndRankAllCandidates({
   userIngredients = [],
   selectedCategoryIds = [],
   limit = 30,
+  opts = {},
 } = {}) {
   const ctx = buildSuggestContext(profile, recipeMetaById);
 
   const pool = [];
+  const userSet = new Set(userIngredients.map(norm));
 
   for (const catId of selectedCategoryIds) {
     const builder = CATEGORY_TO_BUILDER[catId];
@@ -215,7 +278,7 @@ export function generateAndRankAllCandidates({
     const items = builder(userIngredients) || [];
 
     for (const it of items) {
-      const enriched = enrichCandidate(it, userIngredients);
+      const enriched = enrichCandidate(it, userSet);
       pool.push(enriched);
     }
   }
@@ -223,11 +286,12 @@ export function generateAndRankAllCandidates({
   const ranked = pool
     .map((c) => ({
       ...c,
-      _score: scoreCandidate(c, profile, ctx, userIngredients),
+      _score: scoreCandidate(c, profile, ctx, userIngredients, opts),
       _stage: ctx.stage,
     }))
-    .filter((c) => c._score > -9990)
-    .sort((a, b) => b._score - a._score);
+    .sort((a, b) => b._score - a._score)
+    .slice(0, limit)
+    .map(enrichCandidateWithInstructions); // 👈 SADECE BURAYA
 
   return { ctx, results: ranked.slice(0, limit) };
 }

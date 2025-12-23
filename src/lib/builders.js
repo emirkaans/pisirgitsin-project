@@ -77,6 +77,17 @@ export const INGREDIENTS = {
   proteins: {
     meat: ["et", "kıyma"],
     chicken: ["tavuk"],
+    seafood: [
+      "balık",
+      "somon",
+      "ton balığı",
+      "levrek",
+      "çipura",
+      "karides",
+      "kalamar",
+      "midye",
+      "ahtapot",
+    ],
   },
 
   styles: {
@@ -588,6 +599,98 @@ export function buildChickenDishCandidates(rawIngredients) {
     main_category: "Tavuk Yemekleri",
     sub_categories: ["Tavuklu"],
     used_ingredients: ["tavuk"],
+  };
+
+  pushWithStyles(base);
+  return candidates;
+}
+
+export function buildSeafoodDishCandidates(rawIngredients) {
+  const I = normalizeList(rawIngredients);
+
+  // ❌ HARD REQUIRED: deniz ürünü yoksa önerme
+  const seafoods = pickPresent(I, INGREDIENTS.proteins.seafood);
+  if (seafoods.length === 0) return [];
+
+  const mains = pickPresent(I, INGREDIENTS.vegetables.main);
+  const hasTomato = hasAny(I, INGREDIENTS.styles.tomato);
+  const hasOliveOil = hasAny(I, INGREDIENTS.styles.oliveOil);
+
+  const candidates = [];
+
+  // stil varyant ekleyici (meat/chicken ile aynı)
+  const pushWithStyles = (base) => {
+    candidates.push(base);
+
+    if (hasTomato) {
+      candidates.push({
+        ...base,
+        id: `${base.id}_TOMATO`,
+        name: `${base.name} (Salçalı)`,
+        sub_categories: [...base.sub_categories, "Salçalı"],
+        used_ingredients: [...base.used_ingredients, "salça"],
+      });
+    }
+
+    if (hasOliveOil) {
+      candidates.push({
+        ...base,
+        id: `${base.id}_OLIVE`,
+        name: `Zeytinyağlı ${base.name}`,
+        sub_categories: [...base.sub_categories, "Zeytinyağlı"],
+        used_ingredients: [...base.used_ingredients, "zeytinyağı"],
+      });
+    }
+
+    candidates.push({
+      ...base,
+      id: `${base.id}_OVEN`,
+      name: `Fırında ${base.name}`,
+      sub_categories: [...base.sub_categories, "Fırında"],
+    });
+  };
+
+  // 1️⃣ Deniz ürünü + tek ana sebze
+  if (mains.length === 1) {
+    const v = mains[0];
+    const cap = capitalize(v);
+
+    const base = {
+      id: `gen:SEAFOOD_${v.toUpperCase()}`,
+      name: `Deniz Ürünlü ${cap}`,
+      main_category: "Deniz Ürünleri",
+      sub_categories: ["Deniz Ürünlü", cap],
+      used_ingredients: ["deniz ürünü", v],
+      required_ingredients: ["deniz ürünü", v],
+    };
+
+    pushWithStyles(base);
+    return candidates;
+  }
+
+  // 2️⃣ Deniz ürünü + 2+ ana sebze → karışık
+  if (mains.length >= 2) {
+    const base = {
+      id: "gen:SEAFOOD_MIX",
+      name: "Deniz Ürünlü Karışık Sebze",
+      main_category: "Deniz Ürünleri",
+      sub_categories: ["Deniz Ürünlü", "Karışık"],
+      used_ingredients: ["deniz ürünü", ...mains],
+      required_ingredients: ["deniz ürünü", ...mains],
+    };
+
+    pushWithStyles(base);
+    return candidates;
+  }
+
+  // 3️⃣ Sade deniz ürünü (sebze yok)
+  const base = {
+    id: "gen:SEAFOOD_PLAIN",
+    name: "Deniz Ürünü Yemeği",
+    main_category: "Deniz Ürünleri",
+    sub_categories: ["Deniz Ürünlü"],
+    used_ingredients: ["deniz ürünü"],
+    required_ingredients: ["deniz ürünü"],
   };
 
   pushWithStyles(base);

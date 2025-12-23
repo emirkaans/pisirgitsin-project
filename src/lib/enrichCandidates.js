@@ -5,22 +5,36 @@ import { norm } from "@/lib/builders"; // sizin norm (trim+lowercase)
    Helpers
 -------------------------------- */
 
+function toArray(v) {
+  if (!v) return [];
+  return Array.isArray(v) ? v : Array.from(v); // Set/iterable → array
+}
+
 function uniq(arr) {
-  return Array.from(new Set((arr ?? []).map(norm))).filter(Boolean);
+  return Array.from(new Set(toArray(arr).map(norm))).filter(Boolean);
 }
 
 function has(list, item) {
-  const set = new Set((list ?? []).map(norm));
+  const set = new Set(toArray(list).map(norm));
   return set.has(norm(item));
 }
 
 function hasAny(list, items) {
-  return (items ?? []).some((x) => has(list, x));
+  return toArray(items).some((x) => has(list, x));
 }
 
 function diffMissing(available, needed) {
-  const a = new Set((available ?? []).map(norm));
-  return (needed ?? []).map(norm).filter((x) => !a.has(x));
+  const a = new Set(toArray(available).map(norm));
+  return toArray(needed)
+    .map(norm)
+    .filter((x) => !a.has(x));
+}
+
+function joinNice(arr) {
+  const a = toArray(arr).filter(Boolean);
+  if (a.length === 0) return "";
+  if (a.length === 1) return a[0];
+  return a.slice(0, -1).join(", ") + " ve " + a[a.length - 1];
 }
 
 function capTR(s) {
@@ -29,11 +43,25 @@ function capTR(s) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-function joinNice(arr) {
-  const a = (arr ?? []).filter(Boolean);
-  if (a.length === 0) return "";
-  if (a.length === 1) return a[0];
-  return a.slice(0, -1).join(", ") + " ve " + a[a.length - 1];
+function getCandidateCategoryKey(candidate) {
+  // her yerde farklı isim kullanılmış olabilir diye güvenli al
+  return (
+    candidate.category_id ??
+    candidate.category ??
+    candidate.main_category ??
+    candidate.mainCategory ??
+    null
+  );
+}
+
+function buildGenericInstructions(ings) {
+  const shown = ings.slice(0, 6);
+  return [
+    `Malzemeleri hazırla: ${shown.join(", ")}${ings.length > 6 ? "..." : ""}`,
+    "Uygun bir pişirme yöntemi seç (sote/haşlama/fırın) ve ana malzemeyi pişirmeye başla.",
+    "Baharat ve sosları ekle, kıvam ve tuzu ayarla.",
+    "Servis et.",
+  ];
 }
 
 /* ------------------------------
@@ -382,6 +410,47 @@ function buildPastryInstructions(c) {
   };
 }
 
+export function buildSeafoodDishInstructions(ingredients = []) {
+  const hasTomato = ingredients.some((i) => ["domates", "salça"].includes(i));
+  const hasOliveOil = ingredients.includes("zeytinyağı");
+  const hasOnion = ingredients.includes("soğan");
+  const hasGarlic = ingredients.includes("sarımsak");
+
+  const steps = [];
+
+  steps.push("Deniz ürünlerini temizleyip yıkayın, fazla suyunu süzdürün.");
+
+  if (hasOliveOil) {
+    steps.push("Geniş bir tavada zeytinyağını ısıtın.");
+  } else {
+    steps.push("Geniş bir tavayı orta ateşte ısıtın.");
+  }
+
+  if (hasOnion) {
+    steps.push("Soğanı doğrayıp tavada yumuşayana kadar kavurun.");
+  }
+
+  if (hasGarlic) {
+    steps.push("Sarımsağı ekleyip kokusu çıkana kadar kısa süre çevirin.");
+  }
+
+  if (hasTomato) {
+    steps.push(
+      "Domates veya salçayı ekleyip birkaç dakika pişirerek sosu hazırlayın."
+    );
+  }
+
+  steps.push(
+    "Deniz ürünlerini tavaya ekleyin ve yüksek ateşte kısa süre pişirin."
+  );
+  steps.push(
+    "Tuz ve baharatları ekleyip karıştırın, fazla pişirmeden ocaktan alın."
+  );
+  steps.push("Sıcak olarak servis edin.");
+
+  return steps;
+}
+
 function buildMilkDessertInstructions(c) {
   const req = c.required_ingredients ?? [];
 
@@ -476,6 +545,18 @@ function buildInstructionsByCategory(candidate) {
     instructions: ["Malzemeleri hazırla.", "Pişir.", "Servis et."],
   };
 }
+
+export const INSTRUCTION_BUILDERS = {
+  SOUP: buildSoupInstructions,
+  PASTA: buildPastaInstructions,
+  MEAT_DISH: buildMeatDishInstructions,
+  CHICKEN_DISH: buildChickenDishInstructions,
+  LEGUME_DISH: buildLegumeInstructions,
+  VEGETABLE_DISH: buildVegetableDishInstructions,
+  SEAFOOD_DISH: buildSeafoodDishInstructions,
+  PASTRY: buildPastryInstructions,
+  MILK_DESSERT: buildMilkDessertInstructions,
+};
 
 export function enrichCandidate(candidate, userIngredients = []) {
   const available = uniq(userIngredients);

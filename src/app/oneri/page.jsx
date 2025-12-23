@@ -2,6 +2,12 @@
 import { useAuth } from "@/context/AuthContext";
 import { generateAndRankAllCandidates } from "@/lib/suggesterPipeline";
 import { supabase } from "@/lib/supabase";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 import React, { useState } from "react";
 
@@ -111,21 +117,19 @@ const RecipeSuggester = () => {
   const handleGenerate = async () => {
     if (!ingredients.length) return setResults([]);
 
-    // history meta map: fav/saved/view id'leri için {id, main_category, sub_categories}
     const recipeMetaById = await buildRecipeMetaByIdFromProfile(profile);
-    // (bunu sen supabase'den 1 query ile çekiyorsun)
 
-    const { results } = generateAndRankAllCandidates({
+    const { results: newResults } = generateAndRankAllCandidates({
       profile,
       recipeMetaById,
       userIngredients: ingredients,
       selectedCategoryIds,
       limit: 30,
+      opts: { cookForOthers: true },
     });
 
-    console.log({ results });
-
-    setResults(results);
+    console.log({ newResults });
+    setResults(newResults);
   };
 
   return (
@@ -328,150 +332,116 @@ const RecipeSuggester = () => {
         </button>
       </div>
 
-      {/* Sonuçlar */}
       <section>
-        {results.map((r, idx) => (
-          <div
-            key={r.id ?? idx}
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              padding: "1rem",
-            }}
+        {results.length === 0 ? (
+          <p style={{ fontSize: "0.9rem", color: "#6b7280" }}>
+            Henüz öneri yok. Malzeme ekleyip “Tarif Önerisi Getir”e bas.
+          </p>
+        ) : (
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full space-y-3 öb-6"
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                marginBottom: "0.3rem",
-                gap: "1rem",
-              }}
-            >
-              <h3 style={{ margin: 0, fontSize: "1.05rem" }}>{r.name}</h3>
-
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  color: "#6b7280",
-                  textAlign: "right",
-                }}
+            {results.map((r, idx) => (
+              <AccordionItem
+                key={r.id ?? idx}
+                value={String(r.id ?? idx)}
+                className="border rounded-lg px-3 last:border-b"
               >
-                Kategori: {r.main_category}
-                {Array.isArray(r.sub_categories) && r.sub_categories.length > 0
-                  ? ` • ${r.sub_categories.join(" / ")}`
-                  : ""}
-              </span>
-            </div>
-
-            {/* Skor (debug istersen) */}
-            <div
-              style={{
-                fontSize: "0.8rem",
-                color: "#6b7280",
-                marginBottom: "0.6rem",
-              }}
-            >
-              score: {Number(r._score ?? 0).toFixed(2)} • stage:{" "}
-              {Number(r._stage ?? 0).toFixed(2)}
-            </div>
-
-            {/* Malzemeler */}
-            <div style={{ marginBottom: "0.75rem" }}>
-              <strong>Gereken malzemeler:</strong>
-              {Array.isArray(r.required_ingredients) &&
-              r.required_ingredients.length ? (
-                <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
-                  {r.required_ingredients.map((ing) => (
-                    <li key={`req-${ing}`} style={{ fontSize: "0.9rem" }}>
-                      {ing}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "#6b7280",
-                    marginTop: "0.25rem",
-                  }}
-                >
-                  (Bu öneri için required listesi boş görünüyor — builder’da
-                  used_ingredients eksik olabilir.)
-                </div>
-              )}
-            </div>
-
-            {/* Eksikler */}
-            {r.missing_required?.length || r.missing_base?.length ? (
-              <div style={{ marginBottom: "0.75rem" }}>
-                <strong>Eksik malzemeler:</strong>
-                <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
-                  {Array.isArray(r.missing_required) &&
-                    r.missing_required.map((x) => (
-                      <li key={`miss-req-${x}`} style={{ fontSize: "0.9rem" }}>
-                        {x} <span style={{ color: "#ef4444" }}>(gerekli)</span>
-                      </li>
-                    ))}
-                  {Array.isArray(r.missing_base) &&
-                    r.missing_base.map((x) => (
-                      <li key={`miss-base-${x}`} style={{ fontSize: "0.9rem" }}>
-                        {x}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {/* Yapılış */}
-            {Array.isArray(r.instructions) && r.instructions.length ? (
-              <div>
-                <strong>Yapılışı:</strong>
-                <ol style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
-                  {r.instructions.map((step, i) => (
-                    <li
-                      key={`step-${i}`}
-                      style={{ fontSize: "0.9rem", marginBottom: "0.15rem" }}
-                    >
-                      {step}
-                    </li>
-                  ))}
-                </ol>
-
-                {r.time?.prepMin || r.time?.cookMin ? (
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#6b7280",
-                      marginTop: "0.5rem",
-                    }}
-                  >
-                    Süre:{" "}
-                    {r.time?.prepMin ? `Hazırlık ${r.time.prepMin} dk` : ""}
-                    {r.time?.cookMin
-                      ? `${r.time?.prepMin ? " • " : ""}Pişirme ${
-                          r.time.cookMin
-                        } dk`
-                      : ""}
+                <AccordionTrigger className="no-underline hover:no-underline ">
+                  <div className="flex w-full items-start justify-between gap-4">
+                    <div className="text-left">
+                      <div className="font-medium">{r.name}</div>
+                    </div>
                   </div>
-                ) : null}
+                </AccordionTrigger>
 
-                {Array.isArray(r.tips) && r.tips.length ? (
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <strong>İpuçları:</strong>
-                    <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
-                      {r.tips.map((t, i) => (
-                        <li key={`tip-${i}`} style={{ fontSize: "0.9rem" }}>
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
+                <AccordionContent>
+                  {/* Malzemeler */}
+                  <div className="mt-2">
+                    <div className="font-semibold text-sm">
+                      Gereken malzemeler
+                    </div>
+                    {Array.isArray(r.required_ingredients) &&
+                    r.required_ingredients.length ? (
+                      <ul className="mt-2 ml-5 list-disc space-y-1 text-sm">
+                        {r.required_ingredients.map((ing) => (
+                          <li key={`req-${ing}`}>{ing}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        (Bu öneri için required listesi boş görünüyor.)
+                      </div>
+                    )}
                   </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        ))}
+
+                  {/* Eksikler */}
+                  {r.missing_required?.length || r.missing_base?.length ? (
+                    <div className="mt-4">
+                      <div className="font-semibold text-sm">
+                        Eksik malzemeler
+                      </div>
+                      <ul className="mt-2 ml-5 list-disc space-y-1 text-sm">
+                        {Array.isArray(r.missing_required) &&
+                          r.missing_required.map((x) => (
+                            <li key={`miss-req-${x}`}>
+                              {x}{" "}
+                              <span className="text-destructive">
+                                (gerekli)
+                              </span>
+                            </li>
+                          ))}
+                        {Array.isArray(r.missing_base) &&
+                          r.missing_base.map((x) => (
+                            <li key={`miss-base-${x}`}>{x}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  {/* Yapılış */}
+                  {Array.isArray(r.instructions) && r.instructions.length ? (
+                    <div className="mt-4">
+                      <div className="font-semibold text-sm">Yapılışı</div>
+                      <ol className="mt-2 ml-5 list-decimal space-y-1 text-sm">
+                        {r.instructions.map((step, i) => (
+                          <li key={`step-${i}`}>{step}</li>
+                        ))}
+                      </ol>
+
+                      {(r.time?.prepMin || r.time?.cookMin) && (
+                        <div className="mt-3 text-sm text-muted-foreground">
+                          Süre:{" "}
+                          {r.time?.prepMin
+                            ? `Hazırlık ${r.time.prepMin} dk`
+                            : ""}
+                          {r.time?.cookMin
+                            ? `${r.time?.prepMin ? " • " : ""}Pişirme ${
+                                r.time.cookMin
+                              } dk`
+                            : ""}
+                        </div>
+                      )}
+
+                      {Array.isArray(r.tips) && r.tips.length ? (
+                        <div className="mt-4">
+                          <div className="font-semibold text-sm">İpuçları</div>
+                          <ul className="mt-2 ml-5 list-disc space-y-1 text-sm">
+                            {r.tips.map((t, i) => (
+                              <li key={`tip-${i}`}>{t}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
       </section>
     </div>
   );

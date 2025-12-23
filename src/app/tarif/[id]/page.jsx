@@ -72,7 +72,6 @@ const RecipeDetail = () => {
         )
         .eq("id", recipeId)
         .single();
-
       if (!mounted) return;
 
       if (error) {
