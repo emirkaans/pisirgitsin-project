@@ -1,51 +1,70 @@
 "use client";
 import { useAuth } from "@/context/AuthContext";
-import { suggestedPersonalScore } from "@/lib/recipeSuggester";
-
+import { generateAndRankAllCandidates } from "@/lib/suggesterPipeline";
 import { supabase } from "@/lib/supabase";
-import {
-  buildChickenDishRecipe,
-  buildLegumeDishRecipe,
-  buildMeatDishRecipe,
-  buildMilkDessertRecipe,
-  buildPastaRecipe,
-  buildPastryRecipe,
-  buildSeafoodDishRecipe,
-  buildSoupRecipe,
-  buildVegetableDishRecipe,
-} from "@/lib/utils";
-import React, { useCallback, useState } from "react";
+
+import React, { useState } from "react";
+
+export async function buildRecipeMetaByIdFromProfile(profile) {
+  const recipeIds = Array.from(
+    new Set([
+      ...(profile?.favorite_recipe_ids ?? []),
+      ...(profile?.saved_recipe_ids ?? []),
+      ...(profile?.recent_viewed_recipe_ids ?? []),
+    ])
+  );
+
+  if (recipeIds.length === 0) return {};
+
+  // ⚡ sadece ihtiyacımız olan alanlar
+  const { data, error } = await supabase
+    .from("recipe")
+    .select("id, main_category, sub_categories")
+    .in("id", recipeIds);
+
+  if (error) {
+    console.error("recipe meta fetch error:", error);
+    return {};
+  }
+
+  // ID → meta map
+  const map = {};
+  for (const r of data) {
+    map[r.id] = {
+      id: r.id,
+      main_category: r.main_category,
+      sub_categories: r.sub_categories ?? [],
+    };
+  }
+
+  return map;
+}
 
 const CATEGORY_OPTIONS = [
-  { id: "SOUP", label: "Çorbalar", builder: buildSoupRecipe },
+  { id: "SOUP", label: "Çorbalar" },
   {
     id: "LEGUME_DISH",
     label: "Bakliyat Yemekleri",
-    builder: buildLegumeDishRecipe,
   },
   {
     id: "VEGETABLE_DISH",
     label: "Sebze Yemekleri",
-    builder: buildVegetableDishRecipe,
   },
-  { id: "MEAT_DISH", label: "Et Yemekleri", builder: buildMeatDishRecipe },
+  { id: "MEAT_DISH", label: "Et Yemekleri" },
   {
     id: "CHICKEN_DISH",
     label: "Tavuk Yemekleri",
-    builder: buildChickenDishRecipe,
   },
-  { id: "PASTA", label: "Makarna", builder: buildPastaRecipe },
+  { id: "PASTA", label: "Makarna" },
   {
     id: "SEAFOOD_DISH",
     label: "Deniz Ürünleri",
-    builder: buildSeafoodDishRecipe,
   },
   {
     id: "MILK_DESSERT",
     label: "Sütlü Tatlılar",
-    builder: buildMilkDessertRecipe,
   },
-  { id: "PASTRY", label: "Hamur İşleri", builder: buildPastryRecipe },
+  { id: "PASTRY", label: "Hamur İşleri" },
 ];
 
 const RecipeSuggester = () => {
@@ -89,58 +108,24 @@ const RecipeSuggester = () => {
     setResults([]);
   };
 
-  const fetchLastViewedMeta = useCallback(async () => {
-    setError(null);
+  const handleGenerate = async () => {
+    if (!ingredients.length) return setResults([]);
 
-    if (!isUserLoggedIn || !user) return [];
-    const ids = profile?.recent_viewed_recipe_ids ?? [];
-    if (!ids.length) return [];
+    // history meta map: fav/saved/view id'leri için {id, main_category, sub_categories}
+    const recipeMetaById = await buildRecipeMetaByIdFromProfile(profile);
+    // (bunu sen supabase'den 1 query ile çekiyorsun)
 
-    const { data, error: rErr } = await supabase
-      .from("recipe")
-      .select("id, main_category, sub_categories") // sadece lazım olanlar
-      .in("id", ids);
-
-    if (rErr) {
-      setError(rErr);
-      return [];
-    }
-
-    // ids sırasını koru
-    const byId = new Map((data ?? []).map((r) => [r.id, r]));
-    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
-
-    return ordered;
-  }, [isUserLoggedIn, user, profile?.recent_viewed_recipe_ids]);
-
-  const handleGenerate = () => {
-    if (!ingredients.length) {
-      setResults([]);
-      return;
-    }
-
-    const newResults = [];
-
-    selectedCategoryIds.forEach((catId) => {
-      const option = CATEGORY_OPTIONS.find((c) => c.id === catId);
-      if (!option || typeof option.builder !== "function") return;
-
-      const recipe = option.builder(ingredients);
-      if (recipe) {
-        newResults.push({
-          categoryId: catId,
-          categoryLabel: option.label,
-          ...recipe, // recipe: { name, ingredients, steps, ... }
-        });
-      }
+    const { results } = generateAndRankAllCandidates({
+      profile,
+      recipeMetaById,
+      userIngredients: ingredients,
+      selectedCategoryIds,
+      limit: 30,
     });
 
-    // ✅ cold start sıralaması (göstermeyi değiştirmiyor, sadece order)
-    const sorted = newResults
-      .map((r) => ({ ...r, _p: suggestedPersonalScore(r, profile) }))
-      .sort((a, b) => b._p - a._p);
+    console.log({ results });
 
-    setResults(sorted);
+    setResults(results);
   };
 
   return (
@@ -345,71 +330,148 @@ const RecipeSuggester = () => {
 
       {/* Sonuçlar */}
       <section>
-        {results.length === 0 ? (
-          <p style={{ fontSize: "0.9rem", color: "#6b7280" }}>
-            Henüz öneri yok. Kategori seçip malzeme ekledikten sonra “Tarif
-            Önerisi Getir”e bas.
-          </p>
-        ) : (
+        {results.map((r, idx) => (
           <div
-            style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+            key={r.id ?? idx}
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "1rem",
+            }}
           >
-            {results.map((r, idx) => (
-              <div
-                key={idx}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                marginBottom: "0.3rem",
+                gap: "1rem",
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: "1.05rem" }}>{r.name}</h3>
+
+              <span
                 style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  padding: "1rem",
+                  fontSize: "0.8rem",
+                  color: "#6b7280",
+                  textAlign: "right",
                 }}
               >
+                Kategori: {r.main_category}
+                {Array.isArray(r.sub_categories) && r.sub_categories.length > 0
+                  ? ` • ${r.sub_categories.join(" / ")}`
+                  : ""}
+              </span>
+            </div>
+
+            {/* Skor (debug istersen) */}
+            <div
+              style={{
+                fontSize: "0.8rem",
+                color: "#6b7280",
+                marginBottom: "0.6rem",
+              }}
+            >
+              score: {Number(r._score ?? 0).toFixed(2)} • stage:{" "}
+              {Number(r._stage ?? 0).toFixed(2)}
+            </div>
+
+            {/* Malzemeler */}
+            <div style={{ marginBottom: "0.75rem" }}>
+              <strong>Gereken malzemeler:</strong>
+              {Array.isArray(r.required_ingredients) &&
+              r.required_ingredients.length ? (
+                <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
+                  {r.required_ingredients.map((ing) => (
+                    <li key={`req-${ing}`} style={{ fontSize: "0.9rem" }}>
+                      {ing}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "baseline",
-                    marginBottom: "0.3rem",
+                    fontSize: "0.85rem",
+                    color: "#6b7280",
+                    marginTop: "0.25rem",
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: "1.05rem" }}>{r.name}</h3>
-                  <span
+                  (Bu öneri için required listesi boş görünüyor — builder’da
+                  used_ingredients eksik olabilir.)
+                </div>
+              )}
+            </div>
+
+            {/* Eksikler */}
+            {r.missing_required?.length || r.missing_base?.length ? (
+              <div style={{ marginBottom: "0.75rem" }}>
+                <strong>Eksik malzemeler:</strong>
+                <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
+                  {Array.isArray(r.missing_required) &&
+                    r.missing_required.map((x) => (
+                      <li key={`miss-req-${x}`} style={{ fontSize: "0.9rem" }}>
+                        {x} <span style={{ color: "#ef4444" }}>(gerekli)</span>
+                      </li>
+                    ))}
+                  {Array.isArray(r.missing_base) &&
+                    r.missing_base.map((x) => (
+                      <li key={`miss-base-${x}`} style={{ fontSize: "0.9rem" }}>
+                        {x}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {/* Yapılış */}
+            {Array.isArray(r.instructions) && r.instructions.length ? (
+              <div>
+                <strong>Yapılışı:</strong>
+                <ol style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
+                  {r.instructions.map((step, i) => (
+                    <li
+                      key={`step-${i}`}
+                      style={{ fontSize: "0.9rem", marginBottom: "0.15rem" }}
+                    >
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+
+                {r.time?.prepMin || r.time?.cookMin ? (
+                  <div
                     style={{
-                      fontSize: "0.8rem",
+                      fontSize: "0.85rem",
                       color: "#6b7280",
+                      marginTop: "0.5rem",
                     }}
                   >
-                    Kategori: {r.categoryLabel}
-                  </span>
-                </div>
+                    Süre:{" "}
+                    {r.time?.prepMin ? `Hazırlık ${r.time.prepMin} dk` : ""}
+                    {r.time?.cookMin
+                      ? `${r.time?.prepMin ? " • " : ""}Pişirme ${
+                          r.time.cookMin
+                        } dk`
+                      : ""}
+                  </div>
+                ) : null}
 
-                <div style={{ marginBottom: "0.5rem" }}>
-                  <strong>Malzemeler:</strong>
-                  <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
-                    {r.ingredients.map((ing) => (
-                      <li key={ing} style={{ fontSize: "0.9rem" }}>
-                        {ing}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <strong>Yapılışı:</strong>
-                  <ol style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
-                    {r.steps.map((step, i) => (
-                      <li
-                        key={i}
-                        style={{ fontSize: "0.9rem", marginBottom: "0.15rem" }}
-                      >
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
+                {Array.isArray(r.tips) && r.tips.length ? (
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <strong>İpuçları:</strong>
+                    <ul style={{ margin: "0.25rem 0 0 1.1rem", padding: 0 }}>
+                      {r.tips.map((t, i) => (
+                        <li key={`tip-${i}`} style={{ fontSize: "0.9rem" }}>
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
-            ))}
+            ) : null}
           </div>
-        )}
+        ))}
       </section>
     </div>
   );
