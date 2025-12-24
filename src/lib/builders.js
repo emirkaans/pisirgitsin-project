@@ -37,6 +37,22 @@ function detectAllergens(candidate, profile) {
   return hits; // ["susam", "tahin"] gibi
 }
 
+function collectAllIngredients(ingredient) {
+  if (typeof ingredient === "string") {
+    return [ingredient];
+  }
+
+  if (Array.isArray(ingredient)) {
+    return ingredient.flatMap(collectAllIngredients);
+  }
+
+  if (typeof ingredient === "object" && ingredient !== null) {
+    return Object.values(ingredient).flatMap(collectAllIngredients);
+  }
+
+  return [];
+}
+
 export const BASE_PANTRY = {
   common: ["tuz", "karabiber"],
 
@@ -133,6 +149,8 @@ export const INGREDIENTS = {
     toppings: ["tarçın", "fındık", "ceviz"],
   },
 };
+
+export const allIngredients = [...new Set(collectAllIngredients(INGREDIENTS))];
 
 export function buildSoupCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);

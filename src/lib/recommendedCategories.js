@@ -134,8 +134,6 @@ export function getTopCategories({
     for (const sc of subs) {
       if (sc && score.has(sc)) add(sc, W.favSub);
     }
-
-    console.log({ main, subs });
   }
 
   // --------- 9) Recent viewed -> recency decay ----------

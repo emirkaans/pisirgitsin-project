@@ -2,6 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { generateAndRankAllCandidates } from "@/lib/suggesterPipeline";
 import { supabase } from "@/lib/supabase";
+import { allIngredients } from "@/lib/builders";
 import {
   Accordion,
   AccordionContent,
@@ -9,7 +10,176 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import React, { useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+
+// -----------------------------
+// ✅ 0) Turkish Normalization (script.js’den)
+// -----------------------------
+function normalizeTurkishCharacters(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/i̇/g, "i");
+}
+
+// ----------------------------------
+// ✅ 1) Levenshtein Distance (script.js’den, debugger kaldırıldı)
+// ----------------------------------
+function calculateLevenshteinDistance(source, target) {
+  source = source.toLowerCase();
+  target = target.toLowerCase();
+
+  const sourceLength = source.length;
+  const targetLength = target.length;
+
+  const distanceRow = new Array(targetLength + 1);
+  for (let j = 0; j <= targetLength; j++) distanceRow[j] = j;
+
+  for (let i = 1; i <= sourceLength; i++) {
+    let previousDiagonal = distanceRow[0];
+    distanceRow[0] = i;
+
+    for (let j = 1; j <= targetLength; j++) {
+      const previousRowSameColumn = distanceRow[j];
+      const substitutionCost = source[i - 1] === target[j - 1] ? 0 : 1;
+
+      distanceRow[j] = Math.min(
+        distanceRow[j] + 1,
+        distanceRow[j - 1] + 1,
+        previousDiagonal + substitutionCost
+      );
+
+      previousDiagonal = previousRowSameColumn;
+    }
+  }
+
+  return distanceRow[targetLength];
+}
+
+// ----------------------
+// ✅ 2) BK-Tree (script.js’den)
+// ----------------------
+class BKTreeNode {
+  constructor(originalTerm) {
+    this.originalTerm = originalTerm;
+    this.normalizedTerm = normalizeTurkishCharacters(originalTerm);
+    this.children = new Map();
+  }
+}
+
+class BKTree {
+  constructor(distanceFunction) {
+    this.distanceFunction = distanceFunction;
+    this.rootNode = null;
+  }
+
+  addTerm(originalTerm) {
+    if (!originalTerm) return;
+
+    const normalizedTerm = normalizeTurkishCharacters(originalTerm);
+
+    if (!this.rootNode) {
+      this.rootNode = new BKTreeNode(originalTerm);
+      return;
+    }
+
+    let currentNode = this.rootNode;
+
+    while (true) {
+      const distance = this.distanceFunction(
+        normalizedTerm,
+        currentNode.normalizedTerm
+      );
+      const childNode = currentNode.children.get(distance);
+
+      if (!childNode) {
+        currentNode.children.set(distance, new BKTreeNode(originalTerm));
+        return;
+      }
+
+      currentNode = childNode;
+    }
+  }
+
+  searchSimilarTerms(query, maxAllowedDistance = 2) {
+    if (!this.rootNode) return [];
+
+    const normalizedQuery = normalizeTurkishCharacters(query);
+
+    const results = [];
+    const nodesToVisit = [this.rootNode];
+
+    while (nodesToVisit.length > 0) {
+      const node = nodesToVisit.pop();
+      const distance = this.distanceFunction(
+        normalizedQuery,
+        node.normalizedTerm
+      );
+
+      if (distance <= maxAllowedDistance) {
+        results.push({ term: node.originalTerm, distance });
+      }
+
+      const minEdgeDistance = distance - maxAllowedDistance;
+      const maxEdgeDistance = distance + maxAllowedDistance;
+
+      for (const [edgeDistance, childNode] of node.children) {
+        if (
+          edgeDistance >= minEdgeDistance &&
+          edgeDistance <= maxEdgeDistance
+        ) {
+          nodesToVisit.push(childNode);
+        }
+      }
+    }
+
+    return results.sort(
+      (a, b) => a.distance - b.distance || a.term.localeCompare(b.term, "tr")
+    );
+  }
+}
+
+// ----------------------
+// ✅ 3) Ingredient Dataset (script.js’den)
+// İstersen bunu ileride DB’den de besleyebiliriz.
+// ----------------------
+
+// ✅ 5) Suggestion API (script.js’den)
+function getIngredientSuggestions(
+  userInput,
+  { maxDistance = 2, maxSuggestions = 3, minimumInputLength = 2 } = {},
+  ingredientSearchTree
+) {
+  const rawInput = userInput.trim();
+  if (!rawInput || rawInput.length < minimumInputLength) {
+    return { isExactMatch: false, suggestions: [] };
+  }
+
+  const lowerRawInput = rawInput.toLocaleLowerCase("tr");
+  const isExactMatch = allIngredients.some(
+    (ingredient) => ingredient.toLocaleLowerCase("tr") === lowerRawInput
+  );
+
+  if (isExactMatch) {
+    return { isExactMatch: true, suggestions: [] };
+  }
+
+  const matches = ingredientSearchTree.searchSimilarTerms(
+    rawInput,
+    maxDistance
+  );
+
+  return {
+    isExactMatch: false,
+    suggestions: matches.slice(0, maxSuggestions),
+  };
+}
 
 export async function buildRecipeMetaByIdFromProfile(profile) {
   const recipeIds = Array.from(
@@ -22,7 +192,6 @@ export async function buildRecipeMetaByIdFromProfile(profile) {
 
   if (recipeIds.length === 0) return {};
 
-  // ⚡ sadece ihtiyacımız olan alanlar
   const { data, error } = await supabase
     .from("recipe")
     .select("id, main_category, sub_categories")
@@ -33,7 +202,6 @@ export async function buildRecipeMetaByIdFromProfile(profile) {
     return {};
   }
 
-  // ID → meta map
   const map = {};
   for (const r of data) {
     map[r.id] = {
@@ -48,38 +216,35 @@ export async function buildRecipeMetaByIdFromProfile(profile) {
 
 const CATEGORY_OPTIONS = [
   { id: "SOUP", label: "Çorbalar" },
-  {
-    id: "LEGUME_DISH",
-    label: "Bakliyat Yemekleri",
-  },
-  {
-    id: "VEGETABLE_DISH",
-    label: "Sebze Yemekleri",
-  },
+  { id: "LEGUME_DISH", label: "Bakliyat Yemekleri" },
+  { id: "VEGETABLE_DISH", label: "Sebze Yemekleri" },
   { id: "MEAT_DISH", label: "Et Yemekleri" },
-  {
-    id: "CHICKEN_DISH",
-    label: "Tavuk Yemekleri",
-  },
+  { id: "CHICKEN_DISH", label: "Tavuk Yemekleri" },
   { id: "PASTA", label: "Makarna" },
-  {
-    id: "SEAFOOD_DISH",
-    label: "Deniz Ürünleri",
-  },
-  {
-    id: "MILK_DESSERT",
-    label: "Sütlü Tatlılar",
-  },
+  { id: "SEAFOOD_DISH", label: "Deniz Ürünleri" },
+  { id: "MILK_DESSERT", label: "Sütlü Tatlılar" },
   { id: "PASTRY", label: "Hamur İşleri" },
 ];
 
 const RecipeSuggester = () => {
-  const { profile, user, isUserLoggedIn } = useAuth();
+  const { profile } = useAuth();
+
   const [selectedCategoryIds, setSelectedCategoryIds] = useState(["SOUP"]);
   const [ingredientInput, setIngredientInput] = useState("");
   const [ingredients, setIngredients] = useState([]);
   const [results, setResults] = useState([]);
-  const [error, setError] = useState();
+
+  // ✅ Did-you-mean UI state
+  const [dyStatus, setDyStatus] = useState("");
+  const [dySuggestions, setDySuggestions] = useState([]);
+
+  // ✅ BK-Tree’yi bir kez kur (re-render’da tekrar build etme)
+  const ingredientSearchTree = useMemo(() => {
+    const tree = new BKTree(calculateLevenshteinDistance);
+    for (const ingredient of allIngredients) tree.addTerm(ingredient);
+    return tree;
+  }, []);
+
   const handleToggleCategory = (id) => {
     setResults([]);
     setSelectedCategoryIds((prev) =>
@@ -90,11 +255,17 @@ const RecipeSuggester = () => {
   const handleAddIngredient = () => {
     const trimmed = ingredientInput.trim();
     if (!trimmed) return;
+
     if (!ingredients.includes(trimmed)) {
       setIngredients((prev) => [...prev, trimmed]);
     }
+
     setIngredientInput("");
     setResults([]);
+
+    // ✅ input boşalınca önerileri temizle
+    setDyStatus("Bir malzeme yazınca öneriler burada görünecek.");
+    setDySuggestions([]);
   };
 
   const handleIngredientKeyDown = (e) => {
@@ -128,18 +299,54 @@ const RecipeSuggester = () => {
       opts: { cookForOthers: true },
     });
 
-    console.log({ newResults });
     setResults(newResults);
   };
 
+  // ✅ input değiştikçe “did you mean” güncelle (script.js UI wiring’in React karşılığı)
+  useEffect(() => {
+    const input = ingredientInput.trim();
+
+    if (!input) {
+      setDyStatus("Bir malzeme yazınca öneriler burada görünecek.");
+      setDySuggestions([]);
+      return;
+    }
+
+    const { isExactMatch, suggestions } = getIngredientSuggestions(
+      input,
+      { maxDistance: 2, maxSuggestions: 3, minimumInputLength: 2 },
+      ingredientSearchTree
+    );
+
+    if (isExactMatch) {
+      setDyStatus(`✅ "${input}" veri setinde bulundu.`);
+      setDySuggestions([]);
+      return;
+    }
+
+    if (!suggestions.length) {
+      setDyStatus(`❌ "${input}" için yakın bir öneri bulunamadı.`);
+      setDySuggestions([]);
+      return;
+    }
+
+    const best = suggestions[0];
+    if (best.distance === 0) {
+      setDyStatus(`🔤 Türkçe karakter düzeltmesi: Bunu mu demek istediniz?`);
+    } else {
+      setDyStatus(`🤔 Bunu mu demek istediniz?`);
+    }
+
+    setDySuggestions(suggestions);
+  }, [ingredientInput, ingredientSearchTree]);
+
+  const applySuggestion = (term) => {
+    setIngredientInput(term);
+    // effect zaten status/suggestions’ı güncelleyecek
+  };
+
   return (
-    <div
-      style={{
-        maxWidth: "900px",
-        margin: "0 auto",
-        padding: "1.5rem",
-      }}
-    >
+    <div style={{ maxWidth: "900px", margin: "0 auto", padding: "1.5rem" }}>
       <h1 style={{ fontSize: "1.6rem", marginBottom: "1rem" }}>
         Akıllı Tarif Önerici
       </h1>
@@ -243,6 +450,7 @@ const RecipeSuggester = () => {
           >
             Ekle
           </button>
+
           {ingredients.length > 0 && (
             <button
               type="button"
@@ -259,6 +467,61 @@ const RecipeSuggester = () => {
             >
               Tümünü Temizle
             </button>
+          )}
+        </div>
+
+        {/* ✅ Did you mean? UI (JSX) */}
+        <div
+          style={{
+            marginTop: "-0.25rem",
+            marginBottom: "0.75rem",
+            padding: "0.65rem 0.75rem",
+            border: "1px solid #eee",
+            borderRadius: "8px",
+            background: "#fafafa",
+          }}
+        >
+          <div style={{ fontSize: "0.9rem", color: "#374151" }}>{dyStatus}</div>
+
+          {dySuggestions.length > 0 && (
+            <ul
+              style={{
+                marginTop: "0.5rem",
+                paddingLeft: 0,
+                listStyle: "none",
+                display: "grid",
+                gap: "0.35rem",
+              }}
+            >
+              {dySuggestions.map((s) => (
+                <li
+                  key={s.term}
+                  onClick={() => applySuggestion(s.term)}
+                  title="Seçmek için tıkla"
+                  style={{
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0.45rem 0.6rem",
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                    background: "white",
+                  }}
+                >
+                  <span style={{ fontSize: "0.95rem" }}>{s.term}</span>
+                  <span
+                    style={{
+                      fontSize: "0.8rem",
+                      padding: "0.15rem 0.45rem",
+                      borderRadius: "999px",
+                      border: "1px solid #e5e7eb",
+                      color: "#6b7280",
+                    }}
+                  ></span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
@@ -306,6 +569,7 @@ const RecipeSuggester = () => {
         )}
       </section>
 
+      {/* Generate + Results bölümlerin aynen kalıyor */}
       <div style={{ marginBottom: "1.5rem" }}>
         <button
           type="button"
