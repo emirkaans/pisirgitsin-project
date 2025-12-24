@@ -141,7 +141,7 @@ export default function OnboardingDialog() {
             supabase
               .from("recipe")
               .select("id,name,image_url,likes_count,saves_count,views_count")
-              .eq("is_featured", true)
+
               .order("saves_count", { ascending: false })
               .limit(15),
           2,

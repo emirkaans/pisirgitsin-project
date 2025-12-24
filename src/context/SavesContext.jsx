@@ -21,7 +21,7 @@ const normalizeIds = (ids) =>
     : [];
 
 export function SavesProvider({ children }) {
-  const { user, isUserLoggedIn } = useAuth();
+  const { user, isUserLoggedIn, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
 
   const [savedIds, setSavedIds] = useState([]);
@@ -32,6 +32,11 @@ export function SavesProvider({ children }) {
 
   const loadSavedIds = useCallback(async () => {
     setError(null);
+
+    // ✅ AuthContext henüz yükleniyorsa bekle
+    if (authLoading) {
+      return;
+    }
 
     if (!isUserLoggedIn || !userId) {
       setSavedIds([]);
@@ -56,7 +61,7 @@ export function SavesProvider({ children }) {
 
     setSavedIds(normalizeIds(profile?.saved_recipe_ids ?? []));
     setLoading(false);
-  }, [isUserLoggedIn, userId]);
+  }, [isUserLoggedIn, userId, authLoading]);
 
   useEffect(() => {
     loadSavedIds();

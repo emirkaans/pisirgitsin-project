@@ -33,7 +33,7 @@ function baseIngredientName(s) {
 
 const MenuPage = () => {
   const router = useRouter();
-  const { isUserLoggedIn } = useAuth();
+  const { isUserLoggedIn, loading: authLoading } = useAuth();
 
   const {
     savedIds,
@@ -53,12 +53,17 @@ const MenuPage = () => {
 
   // login guard
   useEffect(() => {
+    // ✅ AuthContext henüz yükleniyorsa bekle
+    if (authLoading) {
+      return;
+    }
+
     if (!isUserLoggedIn) {
       router.push("/giris-yap");
     }
-  }, [isUserLoggedIn, router]);
+  }, [isUserLoggedIn, router, authLoading]);
 
-  // local ingredient availability (bunu db’ye taşımaya gerek yok şimdilik)
+  // local ingredient availability (bunu db'ye taşımaya gerek yok şimdilik)
   useEffect(() => {
     const savedAvailableIngredients = JSON.parse(
       localStorage.getItem("availableIngredients") || "[]"
@@ -68,11 +73,16 @@ const MenuPage = () => {
 
   // savedIds değiştikçe tarifleri çek
   useEffect(() => {
+    // ✅ AuthContext henüz yükleniyorsa bekle
+    if (authLoading) {
+      return;
+    }
+
     if (!isUserLoggedIn) return;
 
-    // Provider’da savedRecipes state’i var; ama burada net olsun diye fetch çağırıyoruz
+    // Provider'da savedRecipes state'i var; ama burada net olsun diye fetch çağırıyoruz
     fetchSaveRecipes();
-  }, [isUserLoggedIn, savedIds, fetchSaveRecipes]);
+  }, [isUserLoggedIn, savedIds, fetchSaveRecipes, authLoading]);
 
   // Provider'dan gelen savedRecipes'i MenuPage'in menuItems'ına bağla
   useEffect(() => {

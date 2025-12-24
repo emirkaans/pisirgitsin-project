@@ -21,7 +21,7 @@ const normalizeIds = (ids) =>
     : [];
 
 export function FavoritesProvider({ children }) {
-  const { user, isUserLoggedIn } = useAuth();
+  const { user, isUserLoggedIn, loading: authLoading } = useAuth();
   const userId = user?.id ?? null;
 
   const [favoriteIds, setFavoriteIds] = useState([]);
@@ -32,6 +32,11 @@ export function FavoritesProvider({ children }) {
 
   const loadFavoriteIds = useCallback(async () => {
     setError(null);
+
+    // ✅ AuthContext henüz yükleniyorsa bekle
+    if (authLoading) {
+      return;
+    }
 
     if (!isUserLoggedIn || !userId) {
       setFavoriteIds([]);
@@ -56,7 +61,7 @@ export function FavoritesProvider({ children }) {
 
     setFavoriteIds(normalizeIds(profile?.favorite_recipe_ids ?? []));
     setLoading(false);
-  }, [isUserLoggedIn, userId]);
+  }, [isUserLoggedIn, userId, authLoading]);
 
   useEffect(() => {
     loadFavoriteIds();

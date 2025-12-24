@@ -11,7 +11,7 @@ import { categoriesSet } from "@/constants/constants";
 import { getPopularRecipes } from "@/lib/popularRecipes";
 
 export default function Home() {
-  const { profile } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const { favoriteRecipes, fetchFavoriteRecipes } = useFavorites();
   const router = useRouter();
 
@@ -21,6 +21,11 @@ export default function Home() {
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
 
   useEffect(() => {
+    // ✅ AuthContext henüz yükleniyorsa bekle
+    if (authLoading) {
+      return;
+    }
+
     if (!profile) {
       setCategories([]);
       setRecipes([]);
@@ -90,7 +95,7 @@ export default function Home() {
         setRecipes([]);
         setIsLoadingRecipes(false);
       });
-  }, [profile, fetchFavoriteRecipes]);
+  }, [profile, fetchFavoriteRecipes, authLoading]);
 
   const heroSlides = [
     {
