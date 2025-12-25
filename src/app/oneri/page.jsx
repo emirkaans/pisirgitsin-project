@@ -244,7 +244,6 @@ const RecipeSuggester = () => {
     for (const ingredient of allIngredients) tree.addTerm(ingredient);
     return tree;
   }, []);
-
   const handleToggleCategory = (id) => {
     setResults([]);
     setSelectedCategoryIds((prev) =>

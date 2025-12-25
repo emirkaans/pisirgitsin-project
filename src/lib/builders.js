@@ -117,6 +117,7 @@ export const INGREDIENTS = {
 
     // un bazlı hamur (kek/pankek/kurabiye)
     flour: ["un"],
+    waffleBase: ["waffle", "waffle hamuru"],
 
     // bağlayıcılar
     eggs: ["yumurta"],
@@ -136,7 +137,18 @@ export const INGREDIENTS = {
     ],
     fillingsSweet: ["çikolata", "kakao", "bal", "reçel"],
   },
-
+  fruits: {
+    fresh: [
+      "çilek",
+      "muz",
+      "kivi",
+      "elma",
+      "armut",
+      "yaban mersini",
+      "böğürtlen",
+      "ahududu",
+    ],
+  },
   desserts: {
     milkRequired: ["süt"],
 
@@ -725,6 +737,10 @@ export function buildPastryCandidates(rawIngredients) {
   const savoryFillings = pickPresent(I, INGREDIENTS.baking.fillingsSavory);
   const sweetFillings = pickPresent(I, INGREDIENTS.baking.fillingsSweet);
 
+  // Waffle: waffle hamuru VEYA (un + süt + yumurta)
+  const hasWaffleBase = hasAny(I, INGREDIENTS.baking.waffleBase);
+  const fruits = pickPresent(I, INGREDIENTS.fruits.fresh);
+
   /* --------------------------------------------------
      1) BÖREK (HARD: yufka/hamur/lavaş)
   -------------------------------------------------- */
@@ -867,6 +883,19 @@ export function buildPastryCandidates(rawIngredients) {
         used_ingredients: ["un", "süt", "yumurta"],
       });
     }
+  }
+
+  if (hasWaffleBase || (hasFlour && hasMilk && hasEgg)) {
+    candidates.push({
+      id: "gen:PASTRY_WAFFLE",
+      name: "Waffle",
+      main_category: "Hamur İşleri",
+      sub_categories: ["Waffle", ...(fruits.length ? ["Meyveli"] : [])],
+      used_ingredients: [
+        ...(hasWaffleBase ? ["waffle hamuru"] : ["un", "süt", "yumurta"]),
+        ...fruits,
+      ],
+    });
   }
 
   return candidates;

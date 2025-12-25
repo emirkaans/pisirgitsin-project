@@ -328,7 +328,9 @@ function buildPastryInstructions(c) {
   const isCake = (c.sub_categories ?? []).some((x) => norm(x) === "kek");
   const isCookie = (c.sub_categories ?? []).some((x) => norm(x) === "kurabiye");
   const isPancake = (c.sub_categories ?? []).some((x) => norm(x) === "pankek");
+  const isWaffle = (c.sub_categories ?? []).some((x) => norm(x) === "waffle");
 
+  console.log({ isWaffle });
   if (isBorek) {
     const steps = [
       "İç harcı hazırla (peynir/patates/ıspanak vb.).",
@@ -395,6 +397,23 @@ function buildPastryInstructions(c) {
     return {
       time: { prepMin: 10, cookMin: 10 },
       tips: ["Tava çok kızgın olmasın; dışı yanar."],
+      instructions: steps,
+    };
+  }
+
+  if (isWaffle) {
+    const steps = [
+      "Waffle hamurunu hazırla (un + süt + yumurta; kabartma tozu varsa ekle).",
+      "Waffle makinesini ısıt ve çok az yağla.",
+      "Hamuru dök, kapağı kapat ve altın rengi olana kadar pişir.",
+      "Üzerine meyve (muz/çilek vb.) ve istersen çikolata/bal ekleyip servis et.",
+    ];
+    return {
+      time: { prepMin: 10, cookMin: 8 },
+      tips: [
+        "Makine tam ısınmadan hamuru dökme; yapışabilir.",
+        "Hamuru fazla koyma; taşar.",
+      ],
       instructions: steps,
     };
   }
@@ -524,7 +543,7 @@ function buildMilkDessertInstructions(c) {
 function buildInstructionsByCategory(candidate) {
   const catRaw = candidate.main_category;
   const cat = norm(catRaw);
-
+  console.log({ cat });
   // ✅ Normalize ederek eşleştiriyoruz (daha sağlam)
   if (cat === norm("Çorbalar")) return buildSoupInstructions(candidate);
   if (cat === norm("Makarna")) return buildPastaInstructions(candidate);
