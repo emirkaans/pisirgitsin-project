@@ -28,7 +28,7 @@ const Header = () => {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      toast.loading("Çıkış yapılıyor...");
+      toast.success("Çıkış yapılıyor...");
       await logout();
       await new Promise((resolve) => setTimeout(resolve, 800));
       toast.success("Başarıyla çıkış yapıldı!");

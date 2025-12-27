@@ -27,8 +27,30 @@ export default function Home() {
     }
 
     if (!profile) {
-      setCategories([]);
-      setRecipes([]);
+      try {
+        const top4 = getTopCategories({
+          profile: null,
+          favoriteRecipes: [],
+          now: new Date(),
+        });
+
+        const userCategories = categoriesSet.filter((cat) =>
+          top4.includes(cat.name)
+        );
+
+        setCategories(userCategories);
+      } catch (err) {
+        console.error("Guest category error:", err);
+        setCategories([]);
+      }
+
+      // popüler tarifler yine gelsin istiyorsan:
+      setIsLoadingRecipes(true);
+      getPopularRecipes({ limit: 3 })
+        .then(setRecipes)
+        .catch(() => setRecipes([]))
+        .finally(() => setIsLoadingRecipes(false));
+
       return;
     }
 
@@ -43,9 +65,7 @@ export default function Home() {
       .then(([favoritesResult, recipesResult]) => {
         // Favori tarifler sonucu
         const favRecipes =
-          favoritesResult.status === "fulfilled"
-            ? favoritesResult.value
-            : [];
+          favoritesResult.status === "fulfilled" ? favoritesResult.value : [];
 
         if (favoritesResult.status === "rejected") {
           console.error(
@@ -77,10 +97,7 @@ export default function Home() {
           setRecipes(recipesResult.value);
           setIsLoadingRecipes(false);
         } else {
-          console.error(
-            "Error loading popular recipes:",
-            recipesResult.reason
-          );
+          console.error("Error loading popular recipes:", recipesResult.reason);
           setRecipesError(
             recipesResult.reason?.message ||
               "Popüler tarifler yüklenirken bir hata oluştu"

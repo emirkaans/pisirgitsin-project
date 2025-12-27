@@ -97,7 +97,26 @@ export async function getPopularRecipes({
 
   excludeKnown = true,
 } = {}) {
-  if (!profile) return [];
+  if (!profile) {
+    const poolResult = await withRetry(
+      () =>
+        supabase
+          .from("recipe")
+          .select(
+            "id,name,image_url,main_category,sub_categories,ingredients,saves_count,likes_count,views_count,time_in_minutes,difficulty"
+          )
+          .order("saves_count", { ascending: false })
+          .order("likes_count", { ascending: false })
+          .order("views_count", { ascending: false })
+          .limit(limit),
+      2,
+      300,
+      5000
+    );
+
+    if (poolResult.error) throw poolResult.error;
+    return poolResult.data ?? [];
+  }
 
   const stage = getStage(profile, coldStartEnd, matureStart);
 
