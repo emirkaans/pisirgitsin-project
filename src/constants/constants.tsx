@@ -108,6 +108,7 @@ export const ALLERGEN_OPTIONS = [
   "karides",
   "midye",
   "kalamar",
+  "gluten",
 ];
 
 export const DIET_OPTIONS = [

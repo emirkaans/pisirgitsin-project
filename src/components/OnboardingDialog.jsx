@@ -20,7 +20,12 @@ import {
 } from "@/constants/constants";
 
 export default function OnboardingDialog() {
-  const { user, isUserLoggedIn, loading: authLoading } = useAuth();
+  const {
+    user,
+    isUserLoggedIn,
+    loading: authLoading,
+    fetchProfile,
+  } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -135,7 +140,7 @@ export default function OnboardingDialog() {
 
       try {
         console.log("🔍 Fetching featured recipes...");
-        
+
         const { data, error } = await withRetry(
           () =>
             supabase
@@ -158,7 +163,11 @@ export default function OnboardingDialog() {
           return;
         }
 
-        console.log("✅ Featured recipes loaded:", data?.length || 0, "recipes");
+        console.log(
+          "✅ Featured recipes loaded:",
+          data?.length || 0,
+          "recipes"
+        );
         setFeaturedRecipes(data ?? []);
       } catch (err) {
         console.error("❌ Unexpected error fetching featured recipes:", err);
@@ -221,6 +230,7 @@ export default function OnboardingDialog() {
       .eq("id", userId);
 
     setSaving(false);
+    fetchProfile();
 
     if (error) {
       console.error(error);

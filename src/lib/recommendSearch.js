@@ -18,24 +18,7 @@ function getTagSet(recipe) {
   return set;
 }
 
-function ingredientMatchCount(recipe, userIngredients = []) {
-  const user = (userIngredients ?? []).map(norm).filter(Boolean);
-  if (user.length === 0) return 0;
-
-  const recipeIngs = (recipe?.ingredients ?? [])
-    .map((x) => norm(x?.ingredient))
-    .filter(Boolean);
-
-  let hit = 0;
-
-  // basit ama etkili: “içeriyor mu” (domates salçası vs)
-  for (const u of user) {
-    if (recipeIngs.some((ri) => ri.includes(u))) hit++;
-  }
-  return hit;
-}
-
-function recipeHasAllergen(recipe, allergens) {
+export function recipeHasAllergen(recipe, allergens) {
   const a = (allergens ?? []).map(norm).filter(Boolean);
   if (a.length === 0) return false;
 
@@ -107,7 +90,7 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
     const r = recipeMetaById[id];
     if (!r) continue;
 
-    const t = n <= 1 ? 1 : 1 - i / (n - 1); // en yeni 1, en eski 0
+    const t = n <= 1 ? 1 : 1 - i / (n - 1);
     const w = lerp(0.6, 1.6, t);
     addTags(r, w);
   }
@@ -128,17 +111,16 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
     diets.flatMap((d) => DIET_BLOCK_MAP?.[d] ?? []).map(norm)
   );
 
-  // Ağırlıklar (popüler fonksiyondaki mantığın aynısı)
+  // Ağırlıklar
   const W = {
-    affinity: lerp(1.0, 2.8, stage),
+    affinity: lerp(1.2, 3.2, stage),
     onboardingCat: lerp(1.4, 0.1, stage),
     dietPenalty: lerp(1.2, 0.0, stage),
-
     dietBonus: lerp(0.8, 0.0, stage),
 
-    // popülerlik ile kişisel skor harmanı
-    wPersonal: lerp(1.0, 0.7, stage),
-    wPop: lerp(0.2, 0.6, stage),
+    // personal > pop (her aşamada personal baskın)
+    wPersonal: lerp(1.25, 1.1, stage),
+    wPop: lerp(0.12, 0.25, stage),
   };
 
   return {
@@ -159,46 +141,71 @@ function affinityFromProfile(recipe, tagProfile) {
   return s;
 }
 
+function intersectionCount(aSet, bSet) {
+  let count = 0;
+  for (const x of aSet) {
+    if (bSet.has(x)) count++;
+  }
+  return count;
+}
+
 export function personalScore(recipe, profile, ctx) {
-  if (!profile || !ctx) return 0;
+  if (!recipe || !profile || !ctx) return 0;
 
   const { tagProfile, onboardingCatSet, dietBonusTags, dietBlockTags, W } = ctx;
 
   let score = 0;
 
-  // 1) History-based affinity (asıl sinyal)
-  const aff = affinityFromProfile(recipe, tagProfile);
-  score += aff * W.affinity;
-  console.log({ aff });
-  // 2) Cold-start boosts (zamanla söner)
-  const tags = getTagSet(recipe);
+  // 1️⃣ History-based affinity (ANA SİNYAL)
+  if (tagProfile && tagProfile.size > 0) {
+    const tags = getTagSet(recipe, profile);
+    let affinity = 0;
 
-  const profileCatHit =
-    onboardingCatSet && [...onboardingCatSet].some((c) => tags.has(c)) ? 1 : 0;
-  const dietBonusHit =
-    dietBonusTags && [...dietBonusTags].some((t) => tags.has(t)) ? 1 : 0;
-  const dietBlocked =
-    dietBlockTags && [...dietBlockTags].some((t) => tags.has(t)) ? 1 : 0;
+    for (const t of tags) {
+      affinity += tagProfile.get(t) || 0;
+    }
 
-  score += profileCatHit * W.onboardingCat;
-  score += dietBonusHit * W.dietBonus;
-  score -= dietBlocked * W.dietPenalty;
+    score += affinity * W.affinity;
+  }
 
+  // 2️⃣ Onboarding category match (COUNT bazlı)
+  const tags = getTagSet(recipe, profile);
+
+  const onboardingHits = intersectionCount(onboardingCatSet, tags);
+  // örn:
+  // Etli Patlıcan → 2 (Et Yemekleri + Glutensiz)
+  // İmam Bayıldı → 1 (Glutensiz)
+
+  score += onboardingHits * W.onboardingCat;
+
+  // 3️⃣ Diet bonus / penalty
+  const dietBonusHits = intersectionCount(dietBonusTags, tags);
+  const dietBlockedHits = intersectionCount(dietBlockTags, tags);
+
+  score += dietBonusHits * W.dietBonus;
+  score -= dietBlockedHits * W.dietPenalty;
+
+  // 4️⃣ Allergen penalty (soft)
   const allergens = Array.isArray(profile?.allergens) ? profile.allergens : [];
 
-  const cookForOthers = true; // ctx’ye opts ekleyeceğiz
-  if (recipeHasAllergen(recipe, allergens)) score -= cookForOthers ? 0.0 : 1.2;
+  const cookForOthers = true; // ileride ctx’den gelir
+
+  if (recipeHasAllergen(recipe, allergens)) {
+    score -= cookForOthers ? 0.0 : 1.2;
+  }
 
   return score;
 }
 
-export function rankKeys(recipe, profile, ctx, userIngredients = []) {
+export function rankKeys(recipe, profile, ctx) {
+  console.log({ profile });
   const p = personalScore(recipe, profile, ctx);
   const pop = popularityScore(recipe);
 
   const blended = p * ctx.W.wPersonal + pop * ctx.W.wPop;
 
-  const matchCount = ingredientMatchCount(recipe, userIngredients);
+  // Backend’den geliyor varsayımı: recipe.match_count
+  const matchCount = Number(recipe?.match_count ?? 0);
 
   return {
     personal: p,
