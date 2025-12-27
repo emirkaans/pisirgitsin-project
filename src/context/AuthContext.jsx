@@ -9,23 +9,16 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
 
-  // ✅ yeni:
   const [profile, setProfile] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
-  // Profile fetch helper
   const fetchProfile = async (userId) => {
     if (!userId) return null;
 
     try {
       const { data, error } = await withRetry(
-        () =>
-          supabase
-            .from("profile")
-            .select("*")
-            .eq("id", userId)
-            .single(),
+        () => supabase.from("profile").select("*").eq("id", userId).single(),
         2,
         500,
         8000
@@ -56,7 +49,6 @@ export function AuthProvider({ children }) {
       setSession(s);
       setUser(u);
 
-      // ✅ session varsa profile da çek (non-blocking)
       if (u?.id) {
         try {
           const p = await fetchProfile(u.id);
@@ -105,12 +97,12 @@ export function AuthProvider({ children }) {
 
   const login = async ({ email, password }) => {
     console.log("🔐 Attempting login...");
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
+
     if (error) {
       console.error("❌ Login error:", error);
       throw error;

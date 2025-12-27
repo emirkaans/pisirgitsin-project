@@ -20,7 +20,7 @@ import { supabase } from "@/lib/supabase";
 const SettingsPage = () => {
   const { user, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  console.log({ profile });
+
   const [formData, setFormData] = useState({
     name: profile?.full_name ?? "",
     email: user?.email ?? "",
@@ -34,6 +34,14 @@ const SettingsPage = () => {
       comments: true,
     },
   });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   useEffect(() => {
     setFormData({
@@ -50,14 +58,6 @@ const SettingsPage = () => {
       },
     });
   }, [profile, user]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
 
   if (isLoading) {
     return (

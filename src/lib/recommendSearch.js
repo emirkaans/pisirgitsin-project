@@ -4,6 +4,7 @@ const norm = (s) =>
   String(s || "")
     .toLowerCase()
     .trim();
+
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -69,7 +70,6 @@ function getStage(profile, coldStartEnd = 6, matureStart = 20) {
   return clamp01((engagement - coldStartEnd) / (matureStart - coldStartEnd));
 }
 
-// recipeMetaById: { [id]: { id, main_category, sub_categories } }
 export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
   const stage = getStage(
     profile,
