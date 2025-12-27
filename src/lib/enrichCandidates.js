@@ -543,7 +543,7 @@ function buildMilkDessertInstructions(c) {
 function buildInstructionsByCategory(candidate) {
   const catRaw = candidate.main_category;
   const cat = norm(catRaw);
-  console.log({ cat });
+
   // ✅ Normalize ederek eşleştiriyoruz (daha sağlam)
   if (cat === norm("Çorbalar")) return buildSoupInstructions(candidate);
   if (cat === norm("Makarna")) return buildPastaInstructions(candidate);

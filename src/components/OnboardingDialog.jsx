@@ -139,8 +139,6 @@ export default function OnboardingDialog() {
       setError("");
 
       try {
-        console.log("🔍 Fetching featured recipes...");
-
         const { data, error } = await withRetry(
           () =>
             supabase
@@ -163,11 +161,6 @@ export default function OnboardingDialog() {
           return;
         }
 
-        console.log(
-          "✅ Featured recipes loaded:",
-          data?.length || 0,
-          "recipes"
-        );
         setFeaturedRecipes(data ?? []);
       } catch (err) {
         console.error("❌ Unexpected error fetching featured recipes:", err);

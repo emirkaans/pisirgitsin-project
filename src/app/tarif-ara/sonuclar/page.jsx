@@ -72,7 +72,6 @@ async function buildRecipeMetaById(profile, supabase) {
 function ResultsContent() {
   const searchParams = useSearchParams();
   const ingredientsQ = searchParams.get("malzemeler");
-  console.log({ ingredientsQ });
   const { profile } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { savedIds } = useSaves();
@@ -143,7 +142,7 @@ function ResultsContent() {
         ]);
 
         const { data, error } = searchResult;
-        console.log({ data });
+
         if (error) throw error;
 
         const recipeMetaById = metaResult;
@@ -162,7 +161,6 @@ function ResultsContent() {
           )
           .map((x) => ({ ...x.recipe, ...x.keys }));
 
-        console.log(ranked.slice(0, 6));
         setFilteredRecipes(ranked);
 
         setIsLoading(false);

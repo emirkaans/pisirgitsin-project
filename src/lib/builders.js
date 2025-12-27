@@ -883,19 +883,19 @@ export function buildPastryCandidates(rawIngredients) {
         used_ingredients: ["un", "süt", "yumurta"],
       });
     }
-  }
 
-  if (hasWaffleBase || (hasFlour && hasMilk && hasEgg)) {
-    candidates.push({
-      id: "gen:PASTRY_WAFFLE",
-      name: "Waffle",
-      main_category: "Hamur İşleri",
-      sub_categories: ["Waffle", ...(fruits.length ? ["Meyveli"] : [])],
-      used_ingredients: [
-        ...(hasWaffleBase ? ["waffle hamuru"] : ["un", "süt", "yumurta"]),
-        ...fruits,
-      ],
-    });
+    if (hasWaffleBase || (hasFlour && hasMilk && hasEgg)) {
+      candidates.push({
+        id: "gen:PASTRY_WAFFLE",
+        name: "Waffle",
+        main_category: "Hamur İşleri",
+        sub_categories: ["Waffle", ...(fruits.length ? ["Meyveli"] : [])],
+        used_ingredients: [
+          ...(hasWaffleBase ? ["waffle hamuru"] : ["un", "süt", "yumurta"]),
+          ...fruits,
+        ],
+      });
+    }
   }
 
   return candidates;
