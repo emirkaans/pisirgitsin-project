@@ -91,10 +91,10 @@ const Header = () => {
             </Link>
 
             <Link
-              href="/listeler"
+              href="/kategoriler"
               className="text-gray-700 h-11 hover:text-gray-900 px-3 py-2 rounded-md text-sm lg:text-base font-medium hover:bg-gray-100"
             >
-              Listeler
+              Kategoriler
             </Link>
 
             <div className="flex-1 max-w-xl mx-2">
