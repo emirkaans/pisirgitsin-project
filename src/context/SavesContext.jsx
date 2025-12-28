@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabase";
+import { supabase, withRetry } from "@/lib/supabase";
 import {
   createContext,
   useContext,
@@ -47,11 +47,17 @@ export function SavesProvider({ children }) {
 
     setLoading(true);
 
-    const { data: profile, error: pErr } = await supabase
-      .from("profile")
-      .select("saved_recipe_ids")
-      .eq("id", userId)
-      .single();
+    const { data: profile, error: pErr } = await withRetry(
+      () =>
+        supabase
+          .from("profile")
+          .select("saved_recipe_ids")
+          .eq("id", userId)
+          .single(),
+      3,
+      500,
+      20000
+    );
 
     if (pErr) {
       setError(pErr);
@@ -90,9 +96,12 @@ export function SavesProvider({ children }) {
         : [...savedIds, id];
       setSavedIds(optimisticNext);
 
-      const { data, error: rpcErr } = await supabase.rpc("toggle_save", {
-        p_recipe_id: id,
-      });
+      const { data, error: rpcErr } = await withRetry(
+        () => supabase.rpc("toggle_save", { p_recipe_id: id }),
+        3,
+        500,
+        20000
+      );
 
       setSaving(false);
 
@@ -140,10 +149,16 @@ export function SavesProvider({ children }) {
     }
 
     // ✅ tablo adı "recipe" olmalı
-    const { data, error: rErr } = await supabase
-      .from("recipe")
-      .select("*")
-      .in("id", savedIds);
+    const { data, error: rErr } = await withRetry(
+      () =>
+        supabase
+          .from("recipe")
+          .select("*")
+          .in("id", savedIds),
+      3,
+      500,
+      20000
+    );
 
     if (rErr) {
       setError(rErr);

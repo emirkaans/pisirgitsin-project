@@ -91,9 +91,9 @@ const RecipeDetail = () => {
               )
               .eq("id", recipeId)
               .single(),
-          2, // maxRetries (daha az deneme)
-          500, // delayMs (daha hızlı retry)
-          8000 // timeoutMs (8 saniye - daha makul)
+          3, // maxRetries
+          500, // delayMs
+          20000 // timeoutMs (20 saniye)
         );
 
         const duration = Date.now() - startTime;
@@ -232,7 +232,17 @@ const RecipeDetail = () => {
   };
 
   const handleView = async () => {
-    await supabase.rpc("track_view", { p_recipe_id: recipeId, p_limit: 20 });
+    try {
+      await withRetry(
+        () => supabase.rpc("track_view", { p_recipe_id: recipeId, p_limit: 20 }),
+        2, // view tracking için daha az retry yeterli
+        300,
+        10000
+      );
+    } catch (error) {
+      // View tracking hatası kritik değil, sessizce logla
+      console.warn("View tracking failed:", error);
+    }
   };
 
   useEffect(() => {

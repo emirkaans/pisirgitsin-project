@@ -47,11 +47,17 @@ export function FavoritesProvider({ children }) {
 
     setLoading(true);
 
-    const { data: profile, error: pErr } = await supabase
-      .from("profile")
-      .select("favorite_recipe_ids")
-      .eq("id", userId)
-      .single();
+    const { data: profile, error: pErr } = await withRetry(
+      () =>
+        supabase
+          .from("profile")
+          .select("favorite_recipe_ids")
+          .eq("id", userId)
+          .single(),
+      3,
+      500,
+      20000
+    );
 
     if (pErr) {
       setError(pErr);
@@ -90,9 +96,12 @@ export function FavoritesProvider({ children }) {
         : [...favoriteIds, id];
       setFavoriteIds(optimisticNext);
 
-      const { data, error: rpcErr } = await supabase.rpc("toggle_favorite", {
-        p_recipe_id: id,
-      });
+      const { data, error: rpcErr } = await withRetry(
+        () => supabase.rpc("toggle_favorite", { p_recipe_id: id }),
+        3,
+        500,
+        20000
+      );
 
       setSaving(false);
 
@@ -147,9 +156,9 @@ export function FavoritesProvider({ children }) {
           .from("recipe")
           .select("*")
           .in("id", favoriteIds),
-      2,
+      3,
       500,
-      8000
+      20000
     );
 
     if (rErr) {

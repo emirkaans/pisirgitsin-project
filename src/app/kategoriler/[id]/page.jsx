@@ -75,9 +75,9 @@ const CategoryRecipes = () => {
               .or(
                 `main_category.eq.${category.name},sub_categories.cs.${json}`
               ),
-          2,
+          3,
           500,
-          8000
+          20000
         );
 
         if (cancelled) return;

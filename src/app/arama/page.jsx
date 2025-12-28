@@ -21,9 +21,9 @@ const SearchResults = () => {
       try {
         const { data, error: fetchError } = await withRetry(
           () => supabase.from("recipe").select("*"),
-          2,
+          3,
           500,
-          8000
+          20000
         );
 
         if (fetchError) {

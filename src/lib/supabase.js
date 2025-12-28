@@ -17,10 +17,48 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
+// Global fetch timeout ayarları
+const createFetchWithTimeout = (timeoutMs = 30000) => {
+  return async (url, options = {}) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
+      }
+      throw error;
+    }
+  };
+};
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+  db: {
+    schema: 'public',
+  },
+  global: {
+    fetch: createFetchWithTimeout(30000), // 30 saniye global timeout
+    headers: {
+      'x-client-info': 'pisirgitsin-web',
+    },
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   },
 });
 
@@ -33,7 +71,7 @@ if (typeof window !== "undefined") {
 }
 
 // Timeout wrapper for Supabase queries
-export const withTimeout = (promise, timeoutMs = 5000) => {
+export const withTimeout = (promise, timeoutMs = 20000) => {
   let timeoutId;
   
   const timeoutPromise = new Promise((_, reject) => {
@@ -62,9 +100,9 @@ export const withTimeout = (promise, timeoutMs = 5000) => {
 // Retry wrapper for Supabase queries
 export const withRetry = async (
   queryFn,
-  maxRetries = 2,
-  delayMs = 300, // 500'den 300'e düşürdük
-  timeoutMs = 5000 // 8000'den 5000'e düşürdük - daha hızlı hata tespiti
+  maxRetries = 3, // 2'den 3'e çıkardık - daha fazla deneme şansı
+  delayMs = 500, // 300'den 500'e çıkardık - network gecikmeleri için
+  timeoutMs = 20000 // 5000'den 20000'e çıkardık - daha uzun timeout
 ) => {
   let lastError;
   

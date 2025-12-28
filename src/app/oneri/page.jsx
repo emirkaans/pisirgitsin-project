@@ -56,7 +56,7 @@ const CATEGORY_OPTIONS = [
   { id: "VEGETABLE_DISH", label: "Sebze Yemekleri" },
   { id: "MEAT_DISH", label: "Et Yemekleri" },
   { id: "CHICKEN_DISH", label: "Tavuk Yemekleri" },
-  { id: "PASTA", label: "Makarna" },
+  { id: "PASTA", label: "Makarnalar" },
   { id: "SEAFOOD_DISH", label: "Deniz Ürünleri" },
   { id: "MILK_DESSERT", label: "Sütlü Tatlılar" },
   { id: "PASTRY", label: "Hamur İşleri" },

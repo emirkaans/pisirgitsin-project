@@ -19,9 +19,9 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await withRetry(
         () => supabase.from("profile").select("*").eq("id", userId).single(),
-        2,
+        3,
         500,
-        8000
+        20000
       );
 
       if (error) {
@@ -171,12 +171,18 @@ export function AuthProvider({ children }) {
   const updateProfile = async (patch) => {
     if (!user?.id) throw new Error("Not authenticated");
 
-    const { data, error } = await supabase
-      .from("profile")
-      .update(patch)
-      .eq("id", user.id)
-      .select("*")
-      .single();
+    const { data, error } = await withRetry(
+      () =>
+        supabase
+          .from("profile")
+          .update(patch)
+          .eq("id", user.id)
+          .select("*")
+          .single(),
+      3,
+      500,
+      20000
+    );
 
     if (error) throw error;
 
