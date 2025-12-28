@@ -74,7 +74,7 @@ function ResultsContent() {
   const ingredientsQ = searchParams.get("malzemeler");
   const { profile } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const { savedIds } = useSaves();
+  const { savedIds, toggleSave } = useSaves();
 
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [error, setError] = useState(null);
@@ -103,7 +103,7 @@ function ResultsContent() {
     return ratings.reduce((a, b) => a + b, 0) / ratings.length;
   };
 
-  const handleAddToMenu = async () => {
+  const handleAddToMenu = async (recipeId) => {
     if (!isUserLoggedIn) {
       alert("Menüye eklemek için giriş yapmalısınız.");
       return;
@@ -237,7 +237,10 @@ function ResultsContent() {
                       className="w-full h-full object-cover"
                     />
                     <button
-                      onClick={handleAddToMenu}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToMenu(recipe.id);
+                      }}
                       className={`absolute top-2 right-8 transition-colors duration-500 ${
                         isInMenu
                           ? "text-red-600"

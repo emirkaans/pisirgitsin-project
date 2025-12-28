@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
-import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
+import {
+  IconClipboardCheck,
+  IconClipboardPlus,
+  IconHeart,
+  IconHeartFilled,
+} from "@tabler/icons-react";
+import { useSaves } from "@/context/SavesContext";
 
 const LikedRecipes = () => {
   const { isUserLoggedIn } = useAuth();
@@ -19,8 +25,19 @@ const LikedRecipes = () => {
     saving,
     error,
   } = useFavorites();
+  const { savedIds, toggleSave } = useSaves();
 
   const [recipeRatings, setRecipeRatings] = useState({});
+
+  const handleAddToMenu = async (recipeId) => {
+    if (!isUserLoggedIn) {
+      alert("Menüye eklemek için giriş yapmalısınız.");
+      return;
+    }
+    if (recipeId == null) return;
+
+    await toggleSave(recipeId);
+  };
 
   // rating'leri localStorage’dan okumaya devam (senin mevcut sistemin)
   useEffect(() => {
@@ -94,101 +111,127 @@ const LikedRecipes = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {likedRecipeDetails.map((recipe) => (
-            <Link
-              key={recipe.id}
-              href={`/tarif/${recipe.id}`}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="relative h-48">
-                <img
-                  src={recipe.image_url}
-                  alt={recipe.name}
-                  className="w-full h-full object-cover"
-                />
+          {likedRecipeDetails.map((recipe) => {
+            const isInMenu = savedIds.includes(recipe.id);
 
-                <button
-                  type="button"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    try {
-                      await toggleFavorite(recipe.id);
-                    } catch (err) {
-                      console.error(err);
-                      alert("Favori güncellenemedi.");
-                    }
-                  }}
-                  className={`absolute top-2 right-2 transition-colors duration-500 ${
-                    isFavorited(recipe.id)
-                      ? "text-red-600"
-                      : "text-white hover:text-red-600"
-                  }`}
-                  title={isFavorited(recipe.id) ? "Beğendiniz" : "Beğen"}
-                  aria-label="Beğen"
-                >
-                  {isFavorited(recipe.id) ? (
-                    <IconHeartFilled size={24} />
-                  ) : (
-                    <IconHeart size={24} />
-                  )}
-                </button>
-              </div>
-
-              <div className="p-4">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {recipe.name}
-                </h2>
-
-                <div className="flex items-center mb-2">
-                  <div className="flex items-center">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        className={`text-sm ${
-                          star <= getAverageRating(recipe.id)
-                            ? "text-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600 ml-2">
-                    {getAverageRating(recipe.id) > 0
-                      ? `${getAverageRating(recipe.id).toFixed(1)} (${
-                          recipeRatings[recipe.id]?.length || 0
-                        } değerlendirme)`
-                      : "Henüz değerlendirme yok"}
-                  </span>
-                </div>
-
-                {/* Malzemeler (DB’de ingredients jsonb olmalı) */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    Malzemeler:
-                  </h3>
-
-                  <ul className="text-sm text-gray-600 list-disc list-inside">
-                    {(recipe.ingredients ?? [])
-                      .slice(0, 3)
-                      .map((ingredient, index) => (
-                        <li key={index}>
-                          {ingredient?.amount?.value} {ingredient?.amount?.unit}{" "}
-                          {ingredient?.ingredient}
-                        </li>
-                      ))}
-                    {(recipe.ingredients ?? []).length > 3 && (
-                      <li className="text-gray-500">
-                        ve {(recipe.ingredients ?? []).length - 3} malzeme
-                        daha...
-                      </li>
+            return (
+              <Link
+                key={recipe.id}
+                href={`/tarif/${recipe.id}`}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              >
+                <div className="relative h-48">
+                  <img
+                    src={recipe.image_url}
+                    alt={recipe.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleAddToMenu(recipe.id);
+                    }}
+                    className={`absolute top-2 right-8 transition-colors duration-500 ${
+                      isInMenu
+                        ? "text-red-600"
+                        : "text-white hover:text-red-600"
+                    }`}
+                    title={isInMenu ? "Menümden çıkar" : "Menüme ekle"}
+                    aria-label="Menüme ekle veya çıkar"
+                  >
+                    {isInMenu ? (
+                      <IconClipboardCheck
+                        size={24}
+                        className="text-green-600"
+                      />
+                    ) : (
+                      <IconClipboardPlus size={24} />
                     )}
-                  </ul>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        await toggleFavorite(recipe.id);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Favori güncellenemedi.");
+                      }
+                    }}
+                    className={`absolute top-2 right-2 transition-colors duration-500 ${
+                      isFavorited(recipe.id)
+                        ? "text-red-600"
+                        : "text-white hover:text-red-600"
+                    }`}
+                    title={isFavorited(recipe.id) ? "Beğendiniz" : "Beğen"}
+                    aria-label="Beğen"
+                  >
+                    {isFavorited(recipe.id) ? (
+                      <IconHeartFilled size={24} />
+                    ) : (
+                      <IconHeart size={24} />
+                    )}
+                  </button>
                 </div>
-              </div>
-            </Link>
-          ))}
+
+                <div className="p-4">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    {recipe.name}
+                  </h2>
+
+                  <div className="flex items-center mb-2">
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <span
+                          key={star}
+                          className={`text-sm ${
+                            star <= getAverageRating(recipe.id)
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600 ml-2">
+                      {getAverageRating(recipe.id) > 0
+                        ? `${getAverageRating(recipe.id).toFixed(1)} (${
+                            recipeRatings[recipe.id]?.length || 0
+                          } değerlendirme)`
+                        : "Henüz değerlendirme yok"}
+                    </span>
+                  </div>
+
+                  {/* Malzemeler (DB’de ingredients jsonb olmalı) */}
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">
+                      Malzemeler:
+                    </h3>
+
+                    <ul className="text-sm text-gray-600 list-disc list-inside">
+                      {(recipe.ingredients ?? [])
+                        .slice(0, 3)
+                        .map((ingredient, index) => (
+                          <li key={index}>
+                            {ingredient?.amount?.value}{" "}
+                            {ingredient?.amount?.unit} {ingredient?.ingredient}
+                          </li>
+                        ))}
+                      {(recipe.ingredients ?? []).length > 3 && (
+                        <li className="text-gray-500">
+                          ve {(recipe.ingredients ?? []).length - 3} malzeme
+                          daha...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Hiç favori yok */}

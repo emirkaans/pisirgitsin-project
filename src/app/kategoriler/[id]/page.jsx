@@ -37,7 +37,7 @@ const CategoryRecipes = () => {
   const params = useParams();
   const categoryId = Number(params.id);
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const { savedIds } = useSaves();
+  const { savedIds, toggleSave } = useSaves();
   const [categoryRecipes, setCategoryRecipes] = useState([]);
   const [categoryName, setCategoryName] = useState("");
   const [error, setError] = useState(null);
@@ -112,7 +112,7 @@ const CategoryRecipes = () => {
     };
   }, [categoryId]);
 
-  const handleAddToMenu = async () => {
+  const handleAddToMenu = async (recipeId) => {
     if (!isUserLoggedIn) {
       alert("Menüye eklemek için giriş yapmalısınız.");
       return;
@@ -173,7 +173,10 @@ const CategoryRecipes = () => {
                         className="w-full h-full object-cover"
                       />
                       <button
-                        onClick={handleAddToMenu}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleAddToMenu(recipe.id);
+                        }}
                         className={`absolute top-2 right-8 transition-colors duration-500 ${
                           isInMenu
                             ? "text-red-600"
