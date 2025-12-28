@@ -169,50 +169,119 @@ export function buildSoupCandidates(rawIngredients) {
 
   const mainVeg = pickPresent(I, INGREDIENTS.vegetables.main);
   const hasCream = hasAny(I, INGREDIENTS.sauces.creamy);
+  const hasChicken = hasAny(I, INGREDIENTS.proteins.chicken);
 
   if (mainVeg.length === 0) return [];
 
   const base = {
     main_category: "Çorbalar",
-    sub_categories: [
-      "Sebze",
-      mainVeg.length > 1 ? "Karışık" : capitalize(mainVeg[0]),
-    ],
     required_ingredients: [...mainVeg],
     base_ingredients: ["su", "soğan", "sarımsak", "tuz", "karabiber"],
   };
 
+  const candidates = [];
+
+  // helper: aynı adayları tekrar pushlamayalım
+  const pushCandidate = (c) => {
+    const key = `${c.main_category}|${c.name}|${(
+      c.required_ingredients ?? []
+    ).join(",")}`;
+    if (!pushCandidate._seen) pushCandidate._seen = new Set();
+    if (pushCandidate._seen.has(key)) return;
+    pushCandidate._seen.add(key);
+    candidates.push(c);
+  };
+
+  /* --------------------------
+     1️⃣ TEK SEBZE
+  -------------------------- */
   if (mainVeg.length === 1) {
     const v = mainVeg[0];
-    const candidates = [
-      {
-        ...base,
-        name: `${capitalize(v)} Çorbası`,
-        sub_categories: ["Sebze", capitalize(v)],
-      },
-    ];
+    const capV = capitalize(v);
 
+    // Sebze çorbası
+    pushCandidate({
+      ...base,
+      name: `${capV} Çorbası`,
+      sub_categories: ["Sebze", capV],
+      required_ingredients: [v],
+    });
+
+    // Kremalı sebze çorbası
     if (hasCream) {
-      candidates.push({
+      pushCandidate({
         ...base,
-        name: `Kremalı ${capitalize(v)} Çorbası`,
-        sub_categories: ["Sebze", capitalize(v), "Kremalı"],
+        name: `Kremalı ${capV} Çorbası`,
+        sub_categories: ["Sebze", capV, "Kremalı"],
         required_ingredients: [v, "krema"],
-        base_ingredients: ["su", "soğan", "sarımsak", "tuz", "karabiber"],
       });
     }
+
+    // Tavuklu sebze çorbası
+    if (hasChicken) {
+      pushCandidate({
+        ...base,
+        name: `Tavuklu ${capV} Çorbası`,
+        sub_categories: ["Sebze", capV, "Tavuklu"],
+        required_ingredients: [v, "tavuk"],
+      });
+
+      // Kremalı tavuklu sebze çorbası
+      if (hasCream) {
+        pushCandidate({
+          ...base,
+          name: `Kremalı Tavuklu ${capV} Çorbası`,
+          sub_categories: ["Sebze", capV, "Tavuklu", "Kremalı"],
+          required_ingredients: [v, "tavuk", "krema"],
+        });
+      }
+    }
+
     return candidates;
   }
 
-  // 2+ sebze
-  return [
-    {
+  /* --------------------------
+     2️⃣ 2+ SEBZE (KARIŞIK)
+  -------------------------- */
+  // Sebze çorbası
+  pushCandidate({
+    ...base,
+    name: "Sebze Çorbası",
+    sub_categories: ["Sebze", "Karışık"],
+    required_ingredients: [...mainVeg],
+  });
+
+  // Kremalı sebze çorbası
+  if (hasCream) {
+    pushCandidate({
       ...base,
-      name: hasCream ? "Kremalı Sebze Çorbası" : "Sebze Çorbası",
-      sub_categories: ["Sebze", "Karışık", ...(hasCream ? ["Kremalı"] : [])],
-      required_ingredients: hasCream ? [...mainVeg, "krema"] : [...mainVeg],
-    },
-  ];
+      name: "Kremalı Sebze Çorbası",
+      sub_categories: ["Sebze", "Karışık", "Kremalı"],
+      required_ingredients: [...mainVeg, "krema"],
+    });
+  }
+
+  // Tavuklu sebze çorbası
+  if (hasChicken) {
+    pushCandidate({
+      ...base,
+      name: "Tavuklu Sebze Çorbası",
+      sub_categories: ["Sebze", "Karışık", "Tavuklu"],
+      required_ingredients: [...mainVeg, "tavuk"],
+    });
+
+    // Kremalı tavuklu sebze çorbası
+    if (hasCream) {
+      pushCandidate({
+        ...base,
+        name: "Kremalı Tavuklu Sebze Çorbası",
+        sub_categories: ["Sebze", "Karışık", "Tavuklu", "Kremalı"],
+        required_ingredients: [...mainVeg, "tavuk", "krema"],
+      });
+    }
+  }
+
+  return candidates;
 }
 
 export function buildPastaCandidates(rawIngredients) {
