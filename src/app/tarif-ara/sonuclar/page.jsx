@@ -44,9 +44,9 @@ async function fetchRecipeMetaByIds(ids, supabase) {
         .from("recipe")
         .select("id, main_category, sub_categories")
         .in("id", ids),
-    2,
+    3,
     500,
-    8000
+    20000
   );
 
   if (error) throw error;
@@ -72,7 +72,7 @@ async function buildRecipeMetaById(profile, supabase) {
 function ResultsContent() {
   const searchParams = useSearchParams();
   const ingredientsQ = searchParams.get("malzemeler");
-  const { profile } = useAuth();
+  const { profile,isUserLoggedIn } = useAuth();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { savedIds, toggleSave } = useSaves();
 
@@ -134,9 +134,9 @@ function ResultsContent() {
                 lim: 100, // 150'den 100'e düşürdük
                 off: 0,
               }),
-            2,
-            300,
-            5000
+            3,
+            500,
+            20000
           ),
           buildRecipeMetaById(profile, supabase),
         ]);
