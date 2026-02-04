@@ -1,6 +1,6 @@
 # 🍳 PişirGitsin
 
-PişirGitsin, yemek tariflerini tek bir yerde toplamak ve yemek yapma sürecini daha pratik hale getirmek amacıyla geliştirilmiş bir web uygulamasıdır.
+PişirGitsin, yemek tarifleri keşfetmek ve yemek yapma sürecini daha pratik hale getirmek amacıyla geliştirilmiş bir web uygulamasıdır.
 
 Kullanıcılar tarifleri görüntüleyebilir, malzemelere göre arama yapabilir ve kendilerine uygun yemek önerileri alabilir. Kayıtlı kullanıcılar ise favori listeleri, menüler ve alışveriş listeleri oluşturarak uygulamayı daha aktif şekilde kullanabilir.
 
