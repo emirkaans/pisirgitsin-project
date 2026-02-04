@@ -53,7 +53,7 @@ dikkate alarak benzer ve ilgili tarifler önermeye çalışır.
 Projeyi lokal ortamda çalıştırmak için:
 
 ```bash
-git clone https://github.com/kullanici-adi/pisir-gitsin.git
-cd pisir-gitsin
+git clone https://github.com/emirkaans/pisirgitsin-project.git
+cd pisirgitsin-project
 npm install
 npm run dev
