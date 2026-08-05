@@ -47,33 +47,33 @@ function getStage(profile, coldStartEnd = 6, matureStart = 20) {
   return clamp01((engagement - coldStartEnd) / (matureStart - coldStartEnd));
 }
 
-// viewIds: [en yeni ... en eski]
+ 
 function buildCategoryProfileFromHistory({
   favMeta,
   savedMeta,
   viewMeta,
   viewIds,
 }) {
-  const counts = new Map(); // tag -> weight
+  const counts = new Map();  
 
   const addTags = (recipe, w) => {
     const tags = getTagSet(recipe);
     for (const t of tags) counts.set(t, (counts.get(t) || 0) + w);
   };
 
-  // fav ve saved: güçlü sinyal
+   
   for (const r of favMeta) addTags(r, 3.0);
   for (const r of savedMeta) addTags(r, 2.0);
 
-  // viewed: recency ile ağırlık (en yeni en güçlü)
+   
   const n = viewMeta.length;
   for (let i = 0; i < viewIds.length; i++) {
-    const id = viewIds[i]; // i=0 en yeni
+    const id = viewIds[i];  
     const r = viewMeta.find((x) => x.id === id);
     if (!r) continue;
 
-    const t = n <= 1 ? 1 : 1 - i / (n - 1); // en yeni:1, en eski:0
-    const w = lerp(0.6, 1.6, t); // en yeni 1.6, en eski 0.6
+    const t = n <= 1 ? 1 : 1 - i / (n - 1);  
+    const w = lerp(0.6, 1.6, t);  
     addTags(r, w);
   }
 
@@ -142,14 +142,14 @@ export async function getPopularRecipes({
     excludeKnown ? [...favIds, ...savedIds, ...viewIds] : []
   );
 
-  // --- 1) History meta çek (fav/saved/view) - optimize: daha az ID, daha hızlı ---
+   
   const historyIds = Array.from(
     new Set([...favIds, ...savedIds, ...viewIds])
-  ).slice(0, 50); // 200'den 50'ye düşürdük - yeterli
+  ).slice(0, 50);  
 
-  // --- 2) Paralel istekler: history meta ve pool aynı anda çek ---
+   
   const [historyResult, poolResult] = await Promise.all([
-    // History meta (eğer varsa)
+     
     historyIds.length > 0
       ? withRetry(
           () =>
@@ -158,11 +158,11 @@ export async function getPopularRecipes({
               .select("id,main_category,sub_categories")
               .in("id", historyIds),
           2,
-          300, // Daha hızlı retry
-          5000 // Daha kısa timeout
+          300,  
+          5000  
         )
       : Promise.resolve({ data: [], error: null }),
-    // Global popüler havuzu
+     
     withRetry(
       () =>
         supabase
@@ -173,7 +173,7 @@ export async function getPopularRecipes({
           .order("saves_count", { ascending: false })
           .order("likes_count", { ascending: false })
           .order("views_count", { ascending: false })
-          .limit(Math.min(poolLimit, 100)), // 250'den 100'e düşürdük - yeterli
+          .limit(Math.min(poolLimit, 100)),  
       2,
       300,
       5000
@@ -191,20 +191,20 @@ export async function getPopularRecipes({
   const savedMeta = historyMeta.filter((r) => savedIds.includes(r.id));
   const viewMeta = historyMeta.filter((r) => viewIds.includes(r.id));
 
-  // --- 3) Kategori profili oluştur (asıl kişiselleştirme burada) ---
+   
   const tagProfile = buildCategoryProfileFromHistory({
     favMeta,
     savedMeta,
     viewMeta,
-    viewIds, // en yeni -> en eski
+    viewIds,  
   });
 
-  // --- 4) Cold'ta onboarding + diet küçük katkı; mature'da sıfıra yaklaşır ---
+   
   const W = {
-    profileCats: lerp(1.2, 0.1, stage), // cold güçlü, mature çok zayıf
-    dietBonus: lerp(0.8, 0.0, stage), // diyet zamanla unutulsun
-    dietPenalty: lerp(9999, 0.0, stage), // cold'ta neredeyse block, mature'da 0
-    affinity: lerp(40, 90, stage), // mature'da kişisel uyum daha baskın
+    profileCats: lerp(1.2, 0.1, stage),  
+    dietBonus: lerp(0.8, 0.0, stage),  
+    dietPenalty: lerp(9999, 0.0, stage),  
+    affinity: lerp(40, 90, stage),  
   };
 
   const dietBonusTags = diets
@@ -214,7 +214,7 @@ export async function getPopularRecipes({
     .flatMap((d) => DIET_BLOCK_MAP?.[d] ?? [])
     .map(norm);
 
-  // --- 5) Skorla ---
+   
   const scored = [];
 
   for (const r of pool ?? []) {
@@ -224,17 +224,17 @@ export async function getPopularRecipes({
 
     const pop = popularityScore(r);
 
-    // kişisel kategori profili ile uyum
+     
     const aff = affinityFromProfile(r, tagProfile);
 
-    // cold yardımları
+     
     const tags = getTagSet(r);
 
     const profileCatHit = userCats.some((c) => tags.has(c)) ? 1 : 0;
     const dietBonusHit = dietBonusTags.some((t) => tags.has(t)) ? 1 : 0;
     const dietBlocked = dietBlockTags.some((t) => tags.has(t)) ? 1 : 0;
 
-    // final = pop + aff*W.affinity + coldBoost - dietPenalty
+     
     const final =
       pop +
       aff * W.affinity +

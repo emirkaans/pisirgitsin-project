@@ -39,7 +39,7 @@ const LikedRecipes = () => {
     await toggleSave(recipeId);
   };
 
-  // rating'leri localStorage’dan okumaya devam (senin mevcut sistemin)
+   
   useEffect(() => {
     const savedRatings = JSON.parse(
       localStorage.getItem("recipeRatings") || "{}"
@@ -47,10 +47,10 @@ const LikedRecipes = () => {
     setRecipeRatings(savedRatings);
   }, []);
 
-  // Favori tarifleri DB’den çek
+   
   useEffect(() => {
     if (!isUserLoggedIn) return;
-    // favoriteIds değişince tekrar çekmek mantıklı (küçük dataset)
+     
     fetchFavoriteRecipes();
   }, [isUserLoggedIn, favoriteIds, fetchFavoriteRecipes]);
 
@@ -61,7 +61,7 @@ const LikedRecipes = () => {
   };
 
   const likedRecipeDetails = useMemo(() => {
-    // Provider zaten sırayı favoriteIds’e göre diziyor ama yine de güvenli olalım
+     
     return Array.isArray(favoriteRecipes) ? favoriteRecipes : [];
   }, [favoriteRecipes]);
 
@@ -98,14 +98,14 @@ const LikedRecipes = () => {
           </Link>
         </div>
 
-        {/* Hata */}
+         
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
             Bir hata oluştu: {error.message || String(error)}
           </div>
         )}
 
-        {/* Loading */}
+         
         {(loading || saving) && (
           <div className="mb-6 text-sm text-gray-500">Yükleniyor...</div>
         )}
@@ -205,7 +205,7 @@ const LikedRecipes = () => {
                     </span>
                   </div>
 
-                  {/* Malzemeler (DB’de ingredients jsonb olmalı) */}
+                   
                   <div className="mb-4">
                     <h3 className="text-sm font-medium text-gray-900 mb-1">
                       Malzemeler:
@@ -234,7 +234,7 @@ const LikedRecipes = () => {
           })}
         </div>
 
-        {/* Hiç favori yok */}
+         
         {favoriteIds.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-600">

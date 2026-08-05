@@ -31,7 +31,7 @@ function getHistoryRecipeIds(profile) {
   const saved = profile?.saved_recipe_ids ?? [];
   const viewed = profile?.recent_viewed_recipe_ids ?? [];
 
-  // tekrarları temizle
+   
   return Array.from(new Set([...fav, ...saved, ...viewed]));
 }
 
@@ -51,7 +51,7 @@ async function fetchRecipeMetaByIds(ids, supabase) {
 
   if (error) throw error;
 
-  // map'e çevir
+   
   const map = {};
   for (const r of data ?? []) {
     map[r.id] = {
@@ -125,13 +125,13 @@ function ResultsContent() {
           return;
         }
 
-        // Paralel istekler: arama ve meta aynı anda çek
+         
         const [searchResult, metaResult] = await Promise.all([
           withRetry(
             () =>
               supabase.rpc("search_recipes_by_terms", {
                 terms: searchTerms,
-                lim: 100, // 150'den 100'e düşürdük
+                lim: 100,  
                 off: 0,
               }),
             3,
@@ -175,7 +175,7 @@ function ResultsContent() {
     };
 
     run();
-  }, [searchTerms.join(","), profile]); // profile gelince yeniden sıralasın
+  }, [searchTerms.join(","), profile]);  
 
   if (error) {
     return (
@@ -295,7 +295,7 @@ function ResultsContent() {
                       Kategori: {recipe.main_category}
                     </p>
 
-                    {/* Rating Display (senin mevcut local rating mantığın) */}
+                     
                     <div className="flex items-center mb-2">
                       <div className="flex items-center">
                         {[1, 2, 3, 4, 5].map((star) => (

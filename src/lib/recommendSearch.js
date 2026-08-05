@@ -70,7 +70,7 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
     ? profile.recent_viewed_recipe_ids
     : [];
 
-  // 1) Tag profile: Map<tag, weight>
+   
   const tagProfile = new Map();
 
   const addTags = (recipe, w) => {
@@ -79,14 +79,14 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
     for (const t of tags) tagProfile.set(t, (tagProfile.get(t) || 0) + w);
   };
 
-  // Favorites / Saved güçlü sinyal
+   
   for (const id of favIds) addTags(recipeMetaById[id], 3.0);
   for (const id of savedIds) addTags(recipeMetaById[id], 2.0);
 
-  // Viewed: en yeni -> en eski (en yeni daha güçlü)
+   
   const n = viewIds.length;
   for (let i = 0; i < n; i++) {
-    const id = viewIds[i]; // i=0 en yeni
+    const id = viewIds[i];  
     const r = recipeMetaById[id];
     if (!r) continue;
 
@@ -95,7 +95,7 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
     addTags(r, w);
   }
 
-  // Cold-start sinyalleri (onboarding)
+   
   const userCats = Array.isArray(profile?.categories)
     ? profile.categories.map(norm).filter(Boolean)
     : [];
@@ -111,14 +111,14 @@ export function buildRankContext(profile, recipeMetaById = {}, opts = {}) {
     diets.flatMap((d) => DIET_BLOCK_MAP?.[d] ?? []).map(norm)
   );
 
-  // Ağırlıklar
+   
   const W = {
     affinity: lerp(1.2, 3.2, stage),
     onboardingCat: lerp(1.4, 0.1, stage),
     dietPenalty: lerp(1.2, 0.0, stage),
     dietBonus: lerp(0.8, 0.0, stage),
 
-    // personal > pop (her aşamada personal baskın)
+     
     wPersonal: lerp(1.25, 1.1, stage),
     wPop: lerp(0.12, 0.25, stage),
   };
@@ -156,7 +156,7 @@ export function personalScore(recipe, profile, ctx) {
 
   let score = 0;
 
-  // 1️⃣ History-based affinity (ANA SİNYAL)
+   
   if (tagProfile && tagProfile.size > 0) {
     const tags = getTagSet(recipe, profile);
     let affinity = 0;
@@ -168,27 +168,27 @@ export function personalScore(recipe, profile, ctx) {
     score += affinity * W.affinity;
   }
 
-  // 2️⃣ Onboarding category match (COUNT bazlı)
+   
   const tags = getTagSet(recipe, profile);
 
   const onboardingHits = intersectionCount(onboardingCatSet, tags);
-  // örn:
-  // Etli Patlıcan → 2 (Et Yemekleri + Glutensiz)
-  // İmam Bayıldı → 1 (Glutensiz)
+   
+   
+   
 
   score += onboardingHits * W.onboardingCat;
 
-  // 3️⃣ Diet bonus / penalty
+   
   const dietBonusHits = intersectionCount(dietBonusTags, tags);
   const dietBlockedHits = intersectionCount(dietBlockTags, tags);
 
   score += dietBonusHits * W.dietBonus;
   score -= dietBlockedHits * W.dietPenalty;
 
-  // 4️⃣ Allergen penalty (soft)
+   
   const allergens = Array.isArray(profile?.allergens) ? profile.allergens : [];
 
-  const cookForOthers = true; // ileride ctx’den gelir
+  const cookForOthers = true;  
 
   if (recipeHasAllergen(recipe, allergens)) {
     score -= cookForOthers ? 0.0 : 1.2;
@@ -204,7 +204,7 @@ export function rankKeys(recipe, profile, ctx) {
 
   const blended = p * ctx.W.wPersonal + pop * ctx.W.wPop;
 
-  // Backend’den geliyor varsayımı: recipe.match_count
+   
   const matchCount = Number(recipe?.match_count ?? 0);
 
   return {

@@ -110,7 +110,7 @@ const SearchPage = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent"
                 />
 
-                {/* 3) Did you mean UI */}
+                 
                 {showDidYouMean && (
                   <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-md p-2">
                     <div className="flex flex-col">

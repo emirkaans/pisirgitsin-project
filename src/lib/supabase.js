@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-// Global fetch timeout ayarları
+ 
 const createFetchWithTimeout = (timeoutMs = 30000) => {
   return async (url, options = {}) => {
     const controller = new AbortController();
@@ -50,7 +50,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     schema: 'public',
   },
   global: {
-    fetch: createFetchWithTimeout(30000), // 30 saniye global timeout
+    fetch: createFetchWithTimeout(30000),  
     headers: {
       'x-client-info': 'pisirgitsin-web',
     },
@@ -62,7 +62,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-// Test connection
+ 
 if (typeof window !== "undefined") {
   console.log("🔌 Supabase client initialized:", {
     url: supabaseUrl?.substring(0, 20) + "...",
@@ -70,7 +70,7 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Timeout wrapper for Supabase queries
+ 
 export const withTimeout = (promise, timeoutMs = 20000) => {
   let timeoutId;
   
@@ -81,10 +81,10 @@ export const withTimeout = (promise, timeoutMs = 20000) => {
     );
   });
 
-  // Promise.race kullanarak timeout'u uygula
+   
   const racePromise = Promise.race([promise, timeoutPromise]);
   
-  // Cleanup için promise tamamlandığında timeout'u temizle
+   
   racePromise.then(
     () => {
       if (timeoutId) clearTimeout(timeoutId);
@@ -97,21 +97,21 @@ export const withTimeout = (promise, timeoutMs = 20000) => {
   return racePromise;
 };
 
-// Retry wrapper for Supabase queries
+ 
 export const withRetry = async (
   queryFn,
-  maxRetries = 3, // 2'den 3'e çıkardık - daha fazla deneme şansı
-  delayMs = 500, // 300'den 500'e çıkardık - network gecikmeleri için
-  timeoutMs = 20000 // 5000'den 20000'e çıkardık - daha uzun timeout
+  maxRetries = 3,  
+  delayMs = 500,  
+  timeoutMs = 20000  
 ) => {
   let lastError;
   
-  // İlk önce queryFn'in bir fonksiyon olduğundan emin ol
+   
   if (typeof queryFn !== "function") {
     throw new Error("queryFn must be a function");
   }
 
-  // Supabase client kontrolü
+   
   if (!supabase) {
     throw new Error("Supabase client is not initialized");
   }
@@ -124,7 +124,7 @@ export const withRetry = async (
       
       const queryPromise = queryFn();
       
-      // Promise kontrolü
+       
       if (!queryPromise || typeof queryPromise.then !== "function") {
         throw new Error("queryFn must return a Promise");
       }
@@ -145,23 +145,23 @@ export const withRetry = async (
         details: error.details,
       });
       
-      // Network errors ve timeout'lar için retry yap
+       
       const shouldRetry =
         error.message?.includes("zaman aşımı") ||
         error.message?.includes("timeout") ||
         error.message?.includes("network") ||
         error.message?.includes("fetch") ||
         error.message?.includes("Failed to fetch") ||
-        error.code === "PGRST116" || // PostgREST connection error
+        error.code === "PGRST116" ||  
         error.code === "ECONNREFUSED" ||
-        (!error.code && attempt < maxRetries - 1); // Unknown errors için son deneme hariç retry
+        (!error.code && attempt < maxRetries - 1);  
       
       if (!shouldRetry || attempt === maxRetries - 1) {
         console.error(`❌ Query failed after ${attempt + 1} attempts, giving up`);
         throw error;
       }
       
-      // Exponential backoff
+       
       const delay = delayMs * Math.pow(2, attempt);
       console.log(`⏳ Waiting ${delay}ms before retry...`);
       await new Promise((resolve) => setTimeout(resolve, delay));

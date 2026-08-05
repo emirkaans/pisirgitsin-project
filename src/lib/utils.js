@@ -549,7 +549,7 @@ function decideMilkDessertSubCategory(cleaned) {
   if (cleaned.includes("kakao") || cleaned.includes("çikolata"))
     return "PUDDING";
   if (cleaned.includes("un") || cleaned.includes("nişasta")) return "MUHALLEBI";
-  return null; // ✅ PUDDING değil
+  return null;  
 }
 
 function buildMilkDessertName({ subCategoryId, mainIngredient }) {
@@ -569,13 +569,13 @@ export function buildMilkDessertRecipe(rawIngredients) {
     .filter((i) => i.length > 0);
   if (!cleaned.length) return null;
 
-  // ✅ süt yoksa sütlü tatlı önermeyelim
-  // (istersen krema/yoğurt da kabul edebiliriz)
+   
+   
   const hasMilk = cleaned.includes("süt");
   if (!hasMilk) return null;
 
   const subCategoryId = decideMilkDessertSubCategory(cleaned);
-  if (!subCategoryId) return null; // ✅ fallback yok
+  if (!subCategoryId) return null;  
 
   const baseRecipe = MILK_DESSERT_RECIPES_BY_SUBCATEGORY[subCategoryId];
   if (!baseRecipe) return null;
@@ -610,14 +610,14 @@ export function buildMilkDessertRecipe(rawIngredients) {
 function decidePastrySubCategory(cleaned) {
   if (cleaned.includes("yufka")) return "BOREK";
 
-  // pizza için ideal: ikisi birden
+   
   if (cleaned.includes("domates sosu") && cleaned.includes("mozzarella"))
     return "PIZZA";
 
   if (cleaned.includes("maya") || cleaned.includes("kabartma tozu"))
     return "POGACA";
 
-  return null; // ✅ eskiden POGACA idi
+  return null;  
 }
 
 function buildPastryName({ subCategoryId, mainIngredient }) {
@@ -646,7 +646,7 @@ export function buildPastryRecipe(rawIngredients) {
 
   if (!cleaned.length) return null;
 
-  // ✅ hamur işi için minimum şart: yufka ya da baking grubu ya da pizza ikilisi
+   
   const hasYufka = cleaned.includes("yufka");
   const hasBaking =
     cleaned.includes("un") ||

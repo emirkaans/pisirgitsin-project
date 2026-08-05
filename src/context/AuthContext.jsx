@@ -115,7 +115,7 @@ export function AuthProvider({ children }) {
     setSession(data.session);
     setUser(data.user);
 
-    // ✅ login sonrası profile çek (non-blocking - hata olsa bile login başarılı)
+     
     try {
       const p = await fetchProfile(data.user?.id);
       if (p) {
@@ -126,7 +126,7 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.error("⚠️ Profile fetch failed, but login is still valid:", err);
-      // Profile fetch hatası login'i engellemesin
+       
     }
 
     return data;
@@ -136,9 +136,9 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
 
-    // session geldiyse (auto login)
+     
     if (data?.user && data?.session) {
-      // profile satırı trigger ile zaten oluşuyor, sadece full_name yaz
+       
       const { data: updatedProfile, error: profileErr } = await supabase
         .from("profile")
         .update({ full_name })
@@ -148,7 +148,7 @@ export function AuthProvider({ children }) {
 
       if (profileErr) throw profileErr;
 
-      // ✅ profile state’i de güncelle
+       
       setProfile(updatedProfile);
 
       setSession(data.session);
@@ -167,7 +167,7 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  // ✅ Tek yerden profile güncelle (onboarding vs. buradan)
+   
   const updateProfile = async (patch) => {
     if (!user?.id) throw new Error("Not authenticated");
 
@@ -204,7 +204,7 @@ export function AuthProvider({ children }) {
       loading,
       session,
       user,
-      profile, // ✅ expose et
+      profile,  
       isUserLoggedIn: !!session,
 
       login,
@@ -212,9 +212,9 @@ export function AuthProvider({ children }) {
       loginWithProvider,
       logout,
 
-      fetchProfile, // istersen dışarı aç
-      updateProfile, // ✅ çok işine yarayacak
-      setProfile, // istersen dışarı açma, ama bazen lazım olur
+      fetchProfile,  
+      updateProfile,  
+      setProfile,  
     }),
     [loading, session, user, profile]
   );

@@ -16,7 +16,7 @@ import { toast } from "sonner";
 const UNIT_REGEX = /^\d+\s+(?:adet|su bardağı|yemek kaşığı|çay kaşığı|gram)\s+/;
 
 function ingredientToString(ing) {
-  // ing: { amount: { unit, value }, ingredient }
+   
   const v = ing?.amount?.value;
   const u = ing?.amount?.unit;
   const name = ing?.ingredient;
@@ -45,15 +45,15 @@ const MenuPage = () => {
     toggleSave,
   } = useSaves();
 
-  const [menuItems, setMenuItems] = useState([]); // recipe objects
-  const [selectedRecipes, setSelectedRecipes] = useState([]); // recipe ids
+  const [menuItems, setMenuItems] = useState([]);  
+  const [selectedRecipes, setSelectedRecipes] = useState([]);  
   const [shoppingList, setShoppingList] = useState([]);
   const [availableIngredients, setAvailableIngredients] = useState([]);
   const [showShoppingList, setShowShoppingList] = useState(false);
 
-  // login guard
+   
   useEffect(() => {
-    // ✅ AuthContext henüz yükleniyorsa bekle
+     
     if (authLoading) {
       return;
     }
@@ -63,7 +63,7 @@ const MenuPage = () => {
     }
   }, [isUserLoggedIn, router, authLoading]);
 
-  // local ingredient availability (bunu db'ye taşımaya gerek yok şimdilik)
+   
   useEffect(() => {
     const savedAvailableIngredients = JSON.parse(
       localStorage.getItem("availableIngredients") || "[]"
@@ -71,20 +71,20 @@ const MenuPage = () => {
     setAvailableIngredients(savedAvailableIngredients);
   }, []);
 
-  // savedIds değiştikçe tarifleri çek
+   
   useEffect(() => {
-    // ✅ AuthContext henüz yükleniyorsa bekle
+     
     if (authLoading) {
       return;
     }
 
     if (!isUserLoggedIn) return;
 
-    // Provider'da savedRecipes state'i var; ama burada net olsun diye fetch çağırıyoruz
+     
     fetchSaveRecipes();
   }, [isUserLoggedIn, savedIds, fetchSaveRecipes, authLoading]);
 
-  // Provider'dan gelen savedRecipes'i MenuPage'in menuItems'ına bağla
+   
   useEffect(() => {
     setMenuItems(Array.isArray(savedRecipes) ? savedRecipes : []);
   }, [savedRecipes]);
@@ -100,9 +100,9 @@ const MenuPage = () => {
   const handleRemoveFromMenu = useCallback(
     async (recipeId) => {
       try {
-        await toggleSave(recipeId); // ✅ kaydetmeyi kaldırır (RPC + saves_count)
+        await toggleSave(recipeId);  
         toast.success("Menüden çıkarıldı.");
-        // selected listesinde varsa çıkar
+         
         setSelectedRecipes((prev) => prev.filter((id) => id !== recipeId));
       } catch (e) {
         console.error(e);
@@ -129,15 +129,15 @@ const MenuPage = () => {
         const full = ingredientToString(ing);
         if (!full) return;
 
-        // Basit birleştirme: "2 adet yumurta" gibi
-        // Aynı malzeme + aynı unit birikirse toplar
+         
+         
         const match = full.match(
           /^(\d+)\s+((?:adet|su bardağı|yemek kaşığı|çay kaşığı|gram)\s+)?(.+)$/
         );
 
         if (match) {
           const quantity = parseInt(match[1], 10);
-          const unit = (match[2] || "").trim(); // "adet" gibi
+          const unit = (match[2] || "").trim();  
           const ingredientName = (match[3] || "").trim();
 
           const key = unit ? `${unit} ${ingredientName}` : ingredientName;
@@ -152,8 +152,8 @@ const MenuPage = () => {
 
     const ingredientsWithQuantities = Object.entries(quantityMap).map(
       ([key, quantity]) => {
-        // key = "adet yumurta" gibi olabilir
-        // zaten "adet ..." ise quantity ile birleştir
+         
+         
         const hasUnit = key.match(
           /^(adet|su bardağı|yemek kaşığı|çay kaşığı|gram)\s+/
         );
@@ -227,14 +227,14 @@ const MenuPage = () => {
             )}
           </div>
 
-          {/* Error */}
+           
           {savesError && (
             <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 text-sm">
               Bir hata oluştu: {savesError.message || String(savesError)}
             </div>
           )}
 
-          {/* Loading */}
+           
           {pageLoading && (
             <div className="mb-6 text-sm text-gray-500">Yükleniyor...</div>
           )}

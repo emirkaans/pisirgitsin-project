@@ -70,11 +70,11 @@ const RecipeSuggester = () => {
   const [ingredients, setIngredients] = useState([]);
   const [results, setResults] = useState([]);
 
-  // Did-you-mean UI state
+   
   const [dyStatus, setDyStatus] = useState("");
   const [dySuggestions, setDySuggestions] = useState([]);
 
-  // BK-Tree’yi bir kez kur (re-render’da tekrar build etme)
+   
   const ingredientSearchTree = useMemo(() => {
     const tree = new BKTree(calculateLevenshteinDistance);
     for (const ingredient of allIngredients) tree.addTerm(ingredient);
@@ -99,7 +99,7 @@ const RecipeSuggester = () => {
     setIngredientInput("");
     setResults([]);
 
-    // ✅ input boşalınca önerileri temizle
+     
     setDyStatus("Bir malzeme yazınca öneriler burada görünecek.");
     setDySuggestions([]);
   };
@@ -138,7 +138,7 @@ const RecipeSuggester = () => {
     setResults(newResults);
   };
 
-  // ✅ input değiştikçe “did you mean” güncelle (script.js UI wiring’in React karşılığı)
+   
   useEffect(() => {
     const input = ingredientInput.trim();
 
@@ -305,7 +305,7 @@ const RecipeSuggester = () => {
           )}
         </div>
 
-        {/* ✅ Did you mean? UI (JSX) */}
+         
         <div
           style={{
             marginTop: "-0.25rem",
@@ -404,7 +404,7 @@ const RecipeSuggester = () => {
         )}
       </section>
 
-      {/* Generate + Results bölümlerin aynen kalıyor */}
+       
       <div style={{ marginBottom: "1.5rem" }}>
         <button
           type="button"
@@ -457,7 +457,7 @@ const RecipeSuggester = () => {
                 </AccordionTrigger>
 
                 <AccordionContent>
-                  {/* Malzemeler */}
+                   
                   <div className="mt-2">
                     <div className="font-semibold text-sm">
                       Gereken malzemeler
@@ -476,7 +476,7 @@ const RecipeSuggester = () => {
                     )}
                   </div>
 
-                  {/* Eksikler */}
+                   
                   {r.missing_required?.length || r.missing_base?.length ? (
                     <div className="mt-4">
                       <div className="font-semibold text-sm">
@@ -500,7 +500,7 @@ const RecipeSuggester = () => {
                     </div>
                   ) : null}
 
-                  {/* Yapılış */}
+                   
                   {Array.isArray(r.instructions) && r.instructions.length ? (
                     <div className="mt-4">
                       <div className="font-semibold text-sm">Yapılışı</div>

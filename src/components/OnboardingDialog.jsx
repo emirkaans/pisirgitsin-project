@@ -30,14 +30,14 @@ export default function OnboardingDialog() {
   const [open, setOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  // UI içi step
+   
   const [step, setStep] = useState(0);
 
   const [allergens, setAllergens] = useState([]);
   const [diets, setDiets] = useState([]);
   const [categories, setCategories] = useState([]);
 
-  // Step 4 state
+   
   const [featuredRecipes, setFeaturedRecipes] = useState([]);
   const [favoriteIds, setFavoriteIds] = useState([]);
 
@@ -47,7 +47,7 @@ export default function OnboardingDialog() {
 
   const userId = user?.id ?? null;
 
-  // Profile’ı çek → onboarding tamam mı? (ve varsa önceki seçimleri doldur)
+   
   useEffect(() => {
     const run = async () => {
       if (authLoading) return;
@@ -177,7 +177,7 @@ export default function OnboardingDialog() {
     fetchFeatured();
   }, [open, step, userId]);
 
-  // Her adımda ilgili alanı kaydet
+   
   const saveCurrentStep = async () => {
     if (!userId) return false;
     setSaving(true);
@@ -213,7 +213,7 @@ export default function OnboardingDialog() {
     setSaving(true);
     setError("");
 
-    // Step 4: favorileri de yaz + onboarding tamamla
+     
     const { error } = await supabase
       .from("profile")
       .update({
@@ -240,7 +240,7 @@ export default function OnboardingDialog() {
       if (ok) setStep((s) => s + 1);
       return;
     }
-    // step === 4
+     
     await finish();
   };
 

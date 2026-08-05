@@ -1,4 +1,4 @@
-// src/lib/suggesterPipeline.js
+ 
 import {
   buildSoupCandidates,
   buildPastaCandidates,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/builders";
 import { enrichCandidate, INSTRUCTION_BUILDERS } from "@/lib/enrichCandidates";
 
-// ---------- core helpers ----------
+ 
 const norm = (s) =>
   String(s || "")
     .toLowerCase()
@@ -21,7 +21,7 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const lerp = (a, b, t) => a + (b - a) * t;
 function toArray(v) {
   if (!v) return [];
-  return Array.isArray(v) ? v : Array.from(v); // Set/iterable → array
+  return Array.isArray(v) ? v : Array.from(v);  
 }
 function uniq(arr) {
   return Array.from(new Set(toArray(arr).map(norm))).filter(Boolean);
@@ -38,7 +38,7 @@ function getStage(profile, coldStartEnd = 6, matureStart = 20) {
     ? profile.recent_viewed_recipe_ids
     : [];
 
-  // viewed etkisi: düşük ağırlık + cap (sonsuz şişmesin)
+   
   const viewedCap = Math.min(viewed.length, 40);
   const engagement = fav.length + saved.length + viewedCap * 0.25;
 
@@ -62,7 +62,7 @@ function getIngredientStringsForAllergenCheck(candidate) {
     candidate.ingredients ??
     [];
 
-  // Eğer recipe objesi gelirse: [{ingredient: "..."}, ...] olabilir
+   
   return arr
     .map((x) => (typeof x === "string" ? x : x?.ingredient))
     .filter(Boolean);
@@ -94,7 +94,7 @@ export function enrichCandidateWithInstructions(candidate) {
       .filter(Boolean)
   );
 
-  // zaten instruction varsa ve boş değilse dokunma (en güvenlisi)
+   
   if (
     Array.isArray(candidate.instructions) &&
     candidate.instructions.length > 0
@@ -122,9 +122,9 @@ export function enrichCandidateWithInstructions(candidate) {
   };
 }
 
-/**
- * recipeMetaById: { [id]: { id, main_category, sub_categories } }
- */
+
+
+
 export function buildSuggestContext(profile, recipeMetaById = {}, opts = {}) {
   const stage = getStage(
     profile,
@@ -152,13 +152,13 @@ export function buildSuggestContext(profile, recipeMetaById = {}, opts = {}) {
     for (const t of set) tagProfile.set(t, (tagProfile.get(t) || 0) + w);
   };
 
-  // fav > saved > viewed(recency)
+   
   favIds.forEach((id) => addMeta(recipeMetaById[id], 3.0));
   savedIds.forEach((id) => addMeta(recipeMetaById[id], 2.0));
 
   const n = viewIds.length;
   for (let i = 0; i < n; i++) {
-    const id = viewIds[i]; // en yeni -> en eski
+    const id = viewIds[i];  
     const meta = recipeMetaById[id];
     if (!meta) continue;
     const t = n <= 1 ? 1 : 1 - i / (n - 1);
@@ -171,11 +171,11 @@ export function buildSuggestContext(profile, recipeMetaById = {}, opts = {}) {
     : [];
   const onboardingSet = new Set(onboardingCats);
 
-  // skor ölçeği küçük ve anlaşılır
+   
   const W = {
-    affinity: lerp(1.0, 2.8, stage), // mature'da history baskın
-    onboarding: lerp(1.4, 0.1, stage), // cold'da onboarding baskın
-    ingredient: 0.25, // tie-break
+    affinity: lerp(1.0, 2.8, stage),  
+    onboarding: lerp(1.4, 0.1, stage),  
+    ingredient: 0.25,  
   };
 
   return { stage, tagProfile, onboardingSet, W };
@@ -201,7 +201,7 @@ function ingredientCoverageScore(candidate, userIngredients) {
   let hit = 0;
   for (const ing of used) if (user.has(ing)) hit++;
 
-  // F1-like: 2*hit / (|user| + |used|)
+   
   return (2 * hit) / (user.size + used.size);
 }
 
@@ -217,7 +217,7 @@ export function scoreCandidate(
   const ingStrings = getIngredientStringsForAllergenCheck(candidate);
   const hasAllergen = recipeHasAllergenByStrings(ingStrings, allergens);
 
-  // "başkası için pişiriyorum" modunda alerjen cezası ya çok düşük ya da 0
+   
   const cookForOthers = !!opts.cookForOthers;
   const allergenPenalty = hasAllergen ? (cookForOthers ? 0.0 : 1.2) : 0.0;
 
@@ -234,7 +234,7 @@ export function scoreCandidate(
   );
 }
 
-// ---------- mapping: UI selectedCategoryIds -> builders ----------
+ 
 const CATEGORY_TO_BUILDER = {
   SOUP: buildSoupCandidates,
   PASTA: buildPastaCandidates,
@@ -252,11 +252,11 @@ function diffMissing(available, needed) {
   return (needed ?? []).map(norm).filter((x) => !a.has(x));
 }
 
-/**
- * Tek giriş noktası:
- * - candidates havuzunu oluşturur
- * - cold→mature skora göre sıralar
- */
+
+
+
+
+
 
 export function generateAndRankAllCandidates({
   profile,
@@ -291,7 +291,7 @@ export function generateAndRankAllCandidates({
     }))
     .sort((a, b) => b._score - a._score)
     .slice(0, limit)
-    .map(enrichCandidateWithInstructions); // 👈 SADECE BURAYA
+    .map(enrichCandidateWithInstructions);  
 
   return { ctx, results: ranked.slice(0, limit) };
 }

@@ -17,7 +17,7 @@ import { findAllergenMatches } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 function safeJsonArray(v) {
-  // jsonb array normalde zaten array gelir
+   
   if (Array.isArray(v)) return v;
   if (typeof v === "string") {
     try {
@@ -73,12 +73,12 @@ const RecipeDetail = () => {
 
     (async () => {
       try {
-        // Supabase client kontrolü
+         
         if (!supabase) {
           throw new Error("Supabase bağlantısı kurulamadı");
         }
 
-        // ✅ 1) Tarifi DB'den çek (retry ve timeout ile)
+         
         console.log(`🔍 Fetching recipe ${recipeId} from database...`);
         const startTime = Date.now();
         
@@ -91,9 +91,9 @@ const RecipeDetail = () => {
               )
               .eq("id", recipeId)
               .single(),
-          3, // maxRetries
-          500, // delayMs
-          20000 // timeoutMs (20 saniye)
+          3,  
+          500,  
+          20000  
         );
 
         const duration = Date.now() - startTime;
@@ -125,7 +125,7 @@ const RecipeDetail = () => {
 
         console.log(`✅ Recipe ${recipeId} loaded successfully`);
 
-        // jsonb alanları güvenli hale getir
+         
         const normalized = {
           ...data,
           sub_categories: safeJsonArray(data?.sub_categories),
@@ -136,7 +136,7 @@ const RecipeDetail = () => {
 
         setRecipe(normalized);
 
-        // ✅ 2) rating localStorage (mevcut kodunu koruyoruz)
+         
         try {
           const savedRatings = JSON.parse(
             localStorage.getItem("recipeRatings") || "{}"
@@ -162,7 +162,7 @@ const RecipeDetail = () => {
           }
         } catch (localStorageError) {
           console.error("localStorage error:", localStorageError);
-          // localStorage hatası kritik değil, devam et
+           
         }
 
         setIsLoading(false);
@@ -182,7 +182,7 @@ const RecipeDetail = () => {
       console.log(`🧹 Cleaning up recipe ${recipeId} effect`);
       mounted = false;
     };
-  }, [recipeId]); // isUserLoggedIn'i kaldırdık - gereksiz re-render'a sebep oluyordu
+  }, [recipeId]);  
 
   const handleRating = (rating) => {
     if (!isUserLoggedIn) {
@@ -235,12 +235,12 @@ const RecipeDetail = () => {
     try {
       await withRetry(
         () => supabase.rpc("track_view", { p_recipe_id: recipeId, p_limit: 20 }),
-        2, // view tracking için daha az retry yeterli
+        2,  
         300,
         10000
       );
     } catch (error) {
-      // View tracking hatası kritik değil, sessizce logla
+       
       console.warn("View tracking failed:", error);
     }
   };
@@ -277,9 +277,9 @@ const RecipeDetail = () => {
               onClick={() => {
                 setError(null);
                 setIsLoading(true);
-                // useEffect'i tetiklemek için recipeId'yi değiştirip geri al
+                 
                 const currentId = recipeId;
-                // Force re-fetch by updating state
+                 
                 window.location.reload();
               }}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -437,7 +437,7 @@ const RecipeDetail = () => {
                   const colorIndex = index % pastelColors.length;
                   const categoryId = categoryMap[kategori];
 
-                  // categoryId yoksa link vermeyelim
+                   
                   const cls = `inline-block px-3 py-1 rounded-full text-sm font-medium transition-colors ${pastelColors[colorIndex]}`;
 
                   return categoryId ? (
@@ -469,7 +469,7 @@ const RecipeDetail = () => {
               </div>
             </div>
 
-            {/* Rating */}
+             
             <div className="">
               <div className="flex items-center gap-4">
                 <div className="flex items-center">
@@ -503,7 +503,7 @@ const RecipeDetail = () => {
               </div>
             </div>
 
-            {/* Ingredients */}
+             
             <div className="">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Malzemeler
@@ -519,7 +519,7 @@ const RecipeDetail = () => {
               </ul>
             </div>
 
-            {/* Instructions */}
+             
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Hazırlanış

@@ -72,7 +72,7 @@ export const DIET_BONUS_MAP = {
   ketojenik: ["Et Yemekleri", "Tavuk Yemekleri", "Salatalar", "Ana Yemekler"],
 };
 
-// Diyet -> “çelişen” kategoriler (göstermeyelim)
+ 
 export const DIET_BLOCK_MAP = {
   vegan: ["Et Yemekleri", "Tavuk Yemekleri", "Deniz Ürünleri"],
   vejetaryen: ["Et Yemekleri", "Tavuk Yemekleri", "Deniz Ürünleri"],
@@ -80,14 +80,14 @@ export const DIET_BLOCK_MAP = {
   ketojenik: ["Tatlılar", "Hamur İşleri"],
 };
 
-// Alerjen -> kategori bloklama (minimal)
-// (Senin category listende spesifik “Deniz ürünleri” yok; o yüzden çok hafif tutuyoruz.)
+ 
+ 
 export const ALLERGEN_BLOCK_KEYWORDS = [
   {
     keywords: ["balık", "somon", "karides", "midye", "kalamar"],
     block: ["Deniz Ürünleri"],
-  }, // şimdilik kategori blok yok
-  { keywords: ["gluten", "buğday", "un"], block: ["Hamur İşleri"] }, // intolerans varsa hamur işi düşsün
+  },  
+  { keywords: ["gluten", "buğday", "un"], block: ["Hamur İşleri"] },  
 ];
 
 export const ALLERGEN_OPTIONS = [

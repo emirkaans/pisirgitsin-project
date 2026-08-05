@@ -45,7 +45,7 @@ const ContactPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* İletişim Bilgileri */}
+           
           <div className="bg-white rounded-lg border  p-4">
             <h2 className="text-2xl font-medium text-gray-900 mb-6">
               İletişim Bilgileri
@@ -83,7 +83,7 @@ const ContactPage = () => {
               </div>
             </div>
 
-            {/* Harita */}
+             
             <div className="mt-8">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Konum</h3>
               <div className="aspect-w-16 aspect-h-9">
@@ -101,7 +101,7 @@ const ContactPage = () => {
             </div>
           </div>
 
-          {/* İletişim Formu */}
+           
           <div className="bg-white rounded-lg border  p-4">
             <h2 className="text-2xl font-medium text-gray-900 mb-6">
               Bize Ulaşın

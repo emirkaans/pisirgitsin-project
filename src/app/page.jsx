@@ -21,7 +21,7 @@ export default function Home() {
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
 
   useEffect(() => {
-    // ✅ AuthContext henüz yükleniyorsa bekle
+     
     if (authLoading) {
       return;
     }
@@ -44,7 +44,7 @@ export default function Home() {
         setCategories([]);
       }
 
-      // popüler tarifler yine gelsin istiyorsan:
+       
       setIsLoadingRecipes(true);
       getPopularRecipes({ limit: 3 })
         .then(setRecipes)
@@ -54,7 +54,7 @@ export default function Home() {
       return;
     }
 
-    // Paralel istekler: favori tarifler ve popüler tarifler aynı anda çek
+     
     setIsLoadingRecipes(true);
     setRecipesError(null);
 
@@ -63,7 +63,7 @@ export default function Home() {
       getPopularRecipes({ profile, limit: 3 }),
     ])
       .then(([favoritesResult, recipesResult]) => {
-        // Favori tarifler sonucu
+         
         const favRecipes =
           favoritesResult.status === "fulfilled" ? favoritesResult.value : [];
 
@@ -74,7 +74,7 @@ export default function Home() {
           );
         }
 
-        // Kategorileri hesapla
+         
         try {
           const top4 = getTopCategories({
             profile,
@@ -92,7 +92,7 @@ export default function Home() {
           setCategories([]);
         }
 
-        // Popüler tarifler sonucu
+         
         if (recipesResult.status === "fulfilled") {
           setRecipes(recipesResult.value);
           setIsLoadingRecipes(false);

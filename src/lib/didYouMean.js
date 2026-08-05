@@ -1,6 +1,6 @@
-// -----------------------------
-//  0) Turkish Normalization
-// -----------------------------
+ 
+ 
+ 
 export const trLower = (text) => {
   return String(text ?? "")
     .trim()
@@ -20,9 +20,9 @@ const normalizeTurkishCharacters = (text) => {
     .replace(/i̇/g, "i");
 };
 
-// ----------------------------------
-// 1) Levenshtein Distance
-// ----------------------------------
+ 
+ 
+ 
 export const calculateLevenshteinDistance = (source, target) => {
   source = source.toLowerCase();
   target = target.toLowerCase();
@@ -64,9 +64,9 @@ export const levenshteinDistanceTrCaseInsensitive = (
   );
 };
 
-// ----------------------
-// 2) BK-Tree
-// ----------------------
+ 
+ 
+ 
 export class BKTreeNode {
   constructor(originalTerm) {
     this.originalTerm = originalTerm;
@@ -148,7 +148,7 @@ export class BKTree {
   }
 }
 
-//5) Suggestion API
+ 
 export const getIngredientSuggestions = (
   userInput,
   { maxDistance = 2, maxSuggestions = 3, minimumInputLength = 2 } = {},

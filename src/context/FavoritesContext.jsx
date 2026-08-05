@@ -25,7 +25,7 @@ export function FavoritesProvider({ children }) {
   const userId = user?.id ?? null;
 
   const [favoriteIds, setFavoriteIds] = useState([]);
-  const [favoriteRecipes, setFavoriteRecipes] = useState([]); // opsiyonel
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -33,7 +33,7 @@ export function FavoritesProvider({ children }) {
   const loadFavoriteIds = useCallback(async () => {
     setError(null);
 
-    // ✅ AuthContext henüz yükleniyorsa bekle
+     
     if (authLoading) {
       return;
     }
@@ -73,11 +73,11 @@ export function FavoritesProvider({ children }) {
     loadFavoriteIds();
   }, [loadFavoriteIds]);
 
-  /**
-   * ✅ Tek giriş: toggleFavorite
-   * - DB: RPC toggle_favorite(p_recipe_id)
-   * - Response: favorite_recipe_ids + likes_count vb döndürebilir
-   */
+  
+
+
+
+
   const toggleFavorite = useCallback(
     async (recipeId) => {
       if (!isUserLoggedIn || !userId) {
@@ -90,7 +90,7 @@ export function FavoritesProvider({ children }) {
       setSaving(true);
       setError(null);
 
-      // (opsiyonel) optimistic UI
+       
       const optimisticNext = favoriteIds.includes(id)
         ? favoriteIds.filter((x) => x !== id)
         : [...favoriteIds, id];
@@ -106,20 +106,20 @@ export function FavoritesProvider({ children }) {
       setSaving(false);
 
       if (rpcErr) {
-        // optimistic rollback
+         
         setFavoriteIds(favoriteIds);
         setError(rpcErr);
         throw rpcErr;
       }
 
-      // RPC returns table => data array olabilir
+       
       const row = Array.isArray(data) ? data[0] : data;
 
-      // ✅ Eğer favorite_recipe_ids dönüyorsa state'i onunla kesinleştir
+       
       if (row?.favorite_recipe_ids) {
         setFavoriteIds(normalizeIds(row.favorite_recipe_ids));
       } else {
-        // dönmüyorsa profili refresh et
+         
         await loadFavoriteIds();
       }
     },
@@ -135,7 +135,7 @@ export function FavoritesProvider({ children }) {
     [favoriteIds]
   );
 
-  // Opsiyonel: favori tariflerin detaylarını çekmek istersen
+   
   const fetchFavoriteRecipes = useCallback(async () => {
     setError(null);
 
@@ -149,7 +149,7 @@ export function FavoritesProvider({ children }) {
       return [];
     }
 
-    // ✅ tablo adı "recipe"
+     
     const { data, error: rErr } = await withRetry(
       () =>
         supabase
@@ -166,7 +166,7 @@ export function FavoritesProvider({ children }) {
       return [];
     }
 
-    // ids sırasını koruyalım:
+     
     const byId = new Map((data ?? []).map((r) => [r.id, r]));
     const ordered = favoriteIds.map((id) => byId.get(id)).filter(Boolean);
 

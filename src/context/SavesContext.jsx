@@ -25,7 +25,7 @@ export function SavesProvider({ children }) {
   const userId = user?.id ?? null;
 
   const [savedIds, setSavedIds] = useState([]);
-  const [savedRecipes, setSavedRecipes] = useState([]); // opsiyonel
+  const [savedRecipes, setSavedRecipes] = useState([]);  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -33,7 +33,7 @@ export function SavesProvider({ children }) {
   const loadSavedIds = useCallback(async () => {
     setError(null);
 
-    // ✅ AuthContext henüz yükleniyorsa bekle
+     
     if (authLoading) {
       return;
     }
@@ -73,11 +73,11 @@ export function SavesProvider({ children }) {
     loadSavedIds();
   }, [loadSavedIds]);
 
-  /**
-   * ✅ Tek giriş: toggleSave
-   * - DB: RPC toggle_save(p_recipe_id)
-   * - Response: saved_recipe_ids döndürüyorsan state'i onunla sync ederiz
-   */
+  
+
+
+
+
   const toggleSave = useCallback(
     async (recipeId) => {
       if (!isUserLoggedIn || !userId) {
@@ -90,7 +90,7 @@ export function SavesProvider({ children }) {
       setSaving(true);
       setError(null);
 
-      // (opsiyonel) optimistic: önce local state'i flip'le
+       
       const optimisticNext = savedIds.includes(id)
         ? savedIds.filter((x) => x !== id)
         : [...savedIds, id];
@@ -106,20 +106,20 @@ export function SavesProvider({ children }) {
       setSaving(false);
 
       if (rpcErr) {
-        // optimistic'i geri al
+         
         setSavedIds(savedIds);
         setError(rpcErr);
         throw rpcErr;
       }
 
-      // ✅ Eğer RPC saved_recipe_ids döndürüyorsa: kesin doğru state
-      // Supabase RPC returns table ise data array gelir: data[0]
+       
+       
       const row = Array.isArray(data) ? data[0] : data;
       if (row?.saved_recipe_ids) {
         setSavedIds(normalizeIds(row.saved_recipe_ids));
       } else {
-        // RPC liste döndürmüyorsa: en güvenlisi profili tekrar çekmek
-        // (300 tariflik projede bu sorun olmaz)
+         
+         
         await loadSavedIds();
       }
     },
@@ -148,7 +148,7 @@ export function SavesProvider({ children }) {
       return [];
     }
 
-    // ✅ tablo adı "recipe" olmalı
+     
     const { data, error: rErr } = await withRetry(
       () =>
         supabase

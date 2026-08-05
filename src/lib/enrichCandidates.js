@@ -1,13 +1,13 @@
-// src/lib/instructions/enrichCandidates.js
-import { norm } from "@/lib/builders"; // sizin norm (trim+lowercase)
+ 
+import { norm } from "@/lib/builders";  
 
-/* ------------------------------
-   Helpers
--------------------------------- */
+
+
+
 
 function toArray(v) {
   if (!v) return [];
-  return Array.isArray(v) ? v : Array.from(v); // Set/iterable → array
+  return Array.isArray(v) ? v : Array.from(v);  
 }
 
 function uniq(arr) {
@@ -44,7 +44,7 @@ function capTR(s) {
 }
 
 function getCandidateCategoryKey(candidate) {
-  // her yerde farklı isim kullanılmış olabilir diye güvenli al
+   
   return (
     candidate.category_id ??
     candidate.category ??
@@ -64,10 +64,10 @@ function buildGenericInstructions(ings) {
   ];
 }
 
-/* ------------------------------
-   Kategori bazlı BASE malzemeler
-   (bunlar “genelde gerekir”, yoksa tarifi elemek zorunda değilsin)
--------------------------------- */
+
+
+
+
 const BASE_BY_CATEGORY = {
   Çorbalar: ["su", "soğan", "sarımsak", "tuz", "karabiber"],
   Makarna: ["su", "tuz", "zeytinyağı"],
@@ -82,9 +82,9 @@ const BASE_BY_CATEGORY = {
 const CREAMY_ITEMS = ["krema", "süt", "yoğurt"].map(norm);
 const TOMATO_ITEMS = ["domates", "salça"].map(norm);
 
-/* ------------------------------
-   Instruction builder’ları
--------------------------------- */
+
+
+
 
 function buildSoupInstructions(c) {
   const req = c.required_ingredients ?? [];
@@ -137,7 +137,7 @@ function buildPastaInstructions(c) {
   steps.push("Bir tencerede suyu kaynat, tuz ekle.");
   steps.push("Makarnayı ekle ve al dente kıvamda haşla.");
 
-  // ✅ BURASI KODU BOZAN SYNTAX HATASIYDI — düzeltildi
+   
   if (vegs.length) {
     steps.push(`${joinNice(vegs.map(capTR))} malzemelerini tavada sotele.`);
   }
@@ -175,7 +175,7 @@ function buildLegumeInstructions(c) {
     "domates",
     "zeytinyağı",
   ].map(norm);
-  const legume = req.find((x) => !excluded.includes(norm(x))); // nohut/fasulye/mercimek vb.
+  const legume = req.find((x) => !excluded.includes(norm(x)));  
 
   const steps = [];
   if (has(base, "soğan")) steps.push("Soğanı doğra.");
@@ -188,7 +188,7 @@ function buildLegumeInstructions(c) {
   if (has(base, "soğan")) steps.push("Soğanı ekleyip pembeleştir.");
   if (tomato) steps.push("Salça/domates ekleyip 1-2 dakika kavur.");
 
-  // ✅ legume undefined olmasın diye guard
+   
   if (legume) {
     steps.push(
       `${capTR(legume)} ekle (önceden ıslatılması gerekiyorsa ıslat).`
@@ -536,15 +536,15 @@ function buildMilkDessertInstructions(c) {
   };
 }
 
-/* ------------------------------
-   Main entry
--------------------------------- */
+
+
+
 
 function buildInstructionsByCategory(candidate) {
   const catRaw = candidate.main_category;
   const cat = norm(catRaw);
 
-  // ✅ Normalize ederek eşleştiriyoruz (daha sağlam)
+   
   if (cat === norm("Çorbalar")) return buildSoupInstructions(candidate);
   if (cat === norm("Makarna")) return buildPastaInstructions(candidate);
   if (cat === norm("Bakliyat Yemekleri"))

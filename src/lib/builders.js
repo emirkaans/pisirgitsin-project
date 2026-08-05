@@ -1,4 +1,4 @@
-// normalize + temel kontroller
+ 
 export const norm = (s) =>
   String(s || "")
     .toLowerCase()
@@ -34,7 +34,7 @@ function detectAllergens(candidate, profile) {
   for (const al of a) {
     if (l.some((x) => x.includes(al) || al.includes(x))) hits.push(al);
   }
-  return hits; // ["susam", "tahin"] gibi
+  return hits;  
 }
 
 function collectAllIngredients(ingredient) {
@@ -112,21 +112,21 @@ export const INGREDIENTS = {
   },
 
   baking: {
-    // tabanlar (bunlardan biri yoksa börek/pizza gibi şeyleri üretmeyiz)
+     
     doughBases: ["yufka", "hamur", "lavaş"],
 
-    // un bazlı hamur (kek/pankek/kurabiye)
+     
     flour: ["un"],
     waffleBase: ["waffle", "waffle hamuru"],
 
-    // bağlayıcılar
+     
     eggs: ["yumurta"],
     leavening: ["kabartma tozu", "maya", "karbonat"],
 
-    // süt ürünleri (hamur işinde opsiyonel ama bazı tariflerde gerekli)
+     
     dairy: ["süt", "yoğurt", "tereyağı", "krema"],
 
-    // iç malzemeler (sade yaklaşım: genişletilebilir)
+     
     fillingsSavory: [
       "peynir",
       "patates",
@@ -181,7 +181,7 @@ export function buildSoupCandidates(rawIngredients) {
 
   const candidates = [];
 
-  // helper: aynı adayları tekrar pushlamayalım
+   
   const pushCandidate = (c) => {
     const key = `${c.main_category}|${c.name}|${(
       c.required_ingredients ?? []
@@ -192,14 +192,14 @@ export function buildSoupCandidates(rawIngredients) {
     candidates.push(c);
   };
 
-  /* --------------------------
-     1️⃣ TEK SEBZE
-  -------------------------- */
+  
+
+
   if (mainVeg.length === 1) {
     const v = mainVeg[0];
     const capV = capitalize(v);
 
-    // Sebze çorbası
+     
     pushCandidate({
       ...base,
       name: `${capV} Çorbası`,
@@ -207,7 +207,7 @@ export function buildSoupCandidates(rawIngredients) {
       required_ingredients: [v],
     });
 
-    // Kremalı sebze çorbası
+     
     if (hasCream) {
       pushCandidate({
         ...base,
@@ -217,7 +217,7 @@ export function buildSoupCandidates(rawIngredients) {
       });
     }
 
-    // Tavuklu sebze çorbası
+     
     if (hasChicken) {
       pushCandidate({
         ...base,
@@ -226,7 +226,7 @@ export function buildSoupCandidates(rawIngredients) {
         required_ingredients: [v, "tavuk"],
       });
 
-      // Kremalı tavuklu sebze çorbası
+       
       if (hasCream) {
         pushCandidate({
           ...base,
@@ -240,10 +240,10 @@ export function buildSoupCandidates(rawIngredients) {
     return candidates;
   }
 
-  /* --------------------------
-     2️⃣ 2+ SEBZE (KARIŞIK)
-  -------------------------- */
-  // Sebze çorbası
+  
+
+
+   
   pushCandidate({
     ...base,
     name: "Sebze Çorbası",
@@ -251,7 +251,7 @@ export function buildSoupCandidates(rawIngredients) {
     required_ingredients: [...mainVeg],
   });
 
-  // Kremalı sebze çorbası
+   
   if (hasCream) {
     pushCandidate({
       ...base,
@@ -261,7 +261,7 @@ export function buildSoupCandidates(rawIngredients) {
     });
   }
 
-  // Tavuklu sebze çorbası
+   
   if (hasChicken) {
     pushCandidate({
       ...base,
@@ -270,7 +270,7 @@ export function buildSoupCandidates(rawIngredients) {
       required_ingredients: [...mainVeg, "tavuk"],
     });
 
-    // Kremalı tavuklu sebze çorbası
+     
     if (hasCream) {
       pushCandidate({
         ...base,
@@ -287,7 +287,7 @@ export function buildSoupCandidates(rawIngredients) {
 export function buildPastaCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // HARD REQUIRED: makarna yoksa makarna önerme
+   
   if (!has(I, INGREDIENTS.pasta[0])) return [];
 
   const vegs = pickPresent(I, INGREDIENTS.vegetables.main);
@@ -304,7 +304,7 @@ export function buildPastaCandidates(rawIngredients) {
     },
   ];
 
-  // tek sebze -> brokolili makarna, kremalı brokolili makarna, domatesli brokolili makarna
+   
   if (vegs.length === 1) {
     const v = vegs[0];
 
@@ -337,7 +337,7 @@ export function buildPastaCandidates(rawIngredients) {
     }
   }
 
-  // 2+ sebze -> sebzeli makarna, kremalı sebzeli makarna, domatesli sebzeli makarna
+   
   if (vegs.length > 1) {
     candidates.push({
       id: "gen:PASTA_VEG_MIX",
@@ -374,7 +374,7 @@ export function buildPastaCandidates(rawIngredients) {
 export function buildLegumeCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // ❌ HARD REQUIRED: hiç bakliyat yok
+   
   const legumesPresent = pickPresent(I, INGREDIENTS.legumes);
   if (legumesPresent.length === 0) return [];
 
@@ -388,9 +388,9 @@ export function buildLegumeCandidates(rawIngredients) {
   for (const legume of legumesPresent) {
     const cap = capitalize(legume);
 
-    /* -----------------------------------
-       1️⃣ BASE
-    ----------------------------------- */
+    
+
+
     candidates.push({
       id: `gen:LEGUME_${legume.toUpperCase()}`,
       name: `${cap} Yemeği`,
@@ -399,9 +399,9 @@ export function buildLegumeCandidates(rawIngredients) {
       used_ingredients: [legume],
     });
 
-    /* -----------------------------------
-       2️⃣ SALÇALI
-    ----------------------------------- */
+    
+
+
     if (hasTomato) {
       candidates.push({
         id: `gen:LEGUME_${legume.toUpperCase()}_TOMATO`,
@@ -412,9 +412,9 @@ export function buildLegumeCandidates(rawIngredients) {
       });
     }
 
-    /* -----------------------------------
-       3️⃣ ZEYTİNYAĞLI
-    ----------------------------------- */
+    
+
+
     if (hasOliveOil) {
       candidates.push({
         id: `gen:LEGUME_${legume.toUpperCase()}_OLIVE`,
@@ -425,9 +425,9 @@ export function buildLegumeCandidates(rawIngredients) {
       });
     }
 
-    /* -----------------------------------
-       4️⃣ ETLİ
-    ----------------------------------- */
+    
+
+
     if (hasMeat) {
       candidates.push({
         id: `gen:LEGUME_${legume.toUpperCase()}_MEAT`,
@@ -438,9 +438,9 @@ export function buildLegumeCandidates(rawIngredients) {
       });
     }
 
-    /* -----------------------------------
-       5️⃣ TAVUKLU
-    ----------------------------------- */
+    
+
+
     if (hasChicken) {
       candidates.push({
         id: `gen:LEGUME_${legume.toUpperCase()}_CHICKEN`,
@@ -458,16 +458,16 @@ export function buildLegumeCandidates(rawIngredients) {
 export function buildVegetableDishCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // Ana sebzeleri bul
+   
   const mains = pickPresent(I, INGREDIENTS.vegetables.main);
-  if (mains.length === 0) return []; // ❌ hard required
+  if (mains.length === 0) return [];  
 
   const hasOliveOil = hasAny(I, INGREDIENTS.styles.oliveOil);
   const hasTomato = hasAny(I, INGREDIENTS.styles.tomato);
 
   const candidates = [];
 
-  // Yardımcı: stil varyantları ekle
+   
   const pushWithStyles = (base) => {
     candidates.push(base);
 
@@ -491,7 +491,7 @@ export function buildVegetableDishCandidates(rawIngredients) {
       });
     }
 
-    // Fırında varyant (opsiyonel, donanım sinyali yoksa da üretilebilir)
+     
     candidates.push({
       ...base,
       id: `${base.id}_OVEN`,
@@ -500,9 +500,9 @@ export function buildVegetableDishCandidates(rawIngredients) {
     });
   };
 
-  /* --------------------------------------------------
-     1️⃣ TEK ANA SEBZE
-  -------------------------------------------------- */
+  
+
+
   if (mains.length === 1) {
     const v = mains[0];
     const cap = capitalize(v);
@@ -519,9 +519,9 @@ export function buildVegetableDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  /* --------------------------------------------------
-     2️⃣ 2+ ANA SEBZE → KARIŞIK
-  -------------------------------------------------- */
+  
+
+
   const baseMix = {
     id: "gen:VEG_MIX",
     name: "Karışık Sebze Yemeği",
@@ -537,7 +537,7 @@ export function buildVegetableDishCandidates(rawIngredients) {
 export function buildMeatDishCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // ❌ HARD REQUIRED: et yok
+   
   const meats = pickPresent(I, INGREDIENTS.proteins.meat);
   if (meats.length === 0) return [];
 
@@ -547,7 +547,7 @@ export function buildMeatDishCandidates(rawIngredients) {
 
   const candidates = [];
 
-  // stil varyant ekleyici
+   
   const pushWithStyles = (base) => {
     candidates.push(base);
 
@@ -569,9 +569,9 @@ export function buildMeatDishCandidates(rawIngredients) {
     });
   };
 
-  /* --------------------------------------------------
-     1️⃣ ET + TEK ANA SEBZE
-  -------------------------------------------------- */
+  
+
+
   if (mains.length === 1) {
     const v = mains[0];
     const cap = capitalize(v);
@@ -588,9 +588,9 @@ export function buildMeatDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  /* --------------------------------------------------
-     2️⃣ ET + 2+ ANA SEBZE → KARIŞIK
-  -------------------------------------------------- */
+  
+
+
   if (mains.length >= 2) {
     const base = {
       id: "gen:MEAT_MIX",
@@ -604,9 +604,9 @@ export function buildMeatDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  /* --------------------------------------------------
-     3️⃣ SADE ET (SEBZE YOK)
-  -------------------------------------------------- */
+  
+
+
   const base = {
     id: "gen:MEAT_PLAIN",
     name: "Et Yemeği",
@@ -622,7 +622,7 @@ export function buildMeatDishCandidates(rawIngredients) {
 export function buildChickenDishCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // ❌ HARD REQUIRED: tavuk yok
+   
   const chickens = pickPresent(I, INGREDIENTS.proteins.chicken);
   if (chickens.length === 0) return [];
 
@@ -632,7 +632,7 @@ export function buildChickenDishCandidates(rawIngredients) {
 
   const candidates = [];
 
-  // stil varyant ekleyici
+   
   const pushWithStyles = (base) => {
     candidates.push(base);
 
@@ -654,9 +654,9 @@ export function buildChickenDishCandidates(rawIngredients) {
     });
   };
 
-  /* --------------------------------------------------
-     1️⃣ TAVUK + TEK ANA SEBZE
-  -------------------------------------------------- */
+  
+
+
   if (mains.length === 1) {
     const v = mains[0];
     const cap = capitalize(v);
@@ -673,9 +673,9 @@ export function buildChickenDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  /* --------------------------------------------------
-     2️⃣ TAVUK + 2+ ANA SEBZE → KARIŞIK
-  -------------------------------------------------- */
+  
+
+
   if (mains.length >= 2) {
     const base = {
       id: "gen:CHICKEN_MIX",
@@ -689,9 +689,9 @@ export function buildChickenDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  /* --------------------------------------------------
-     3️⃣ SADE TAVUK (SEBZE YOK)
-  -------------------------------------------------- */
+  
+
+
   const base = {
     id: "gen:CHICKEN_PLAIN",
     name: "Tavuk Yemeği",
@@ -707,7 +707,7 @@ export function buildChickenDishCandidates(rawIngredients) {
 export function buildSeafoodDishCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // ❌ HARD REQUIRED: deniz ürünü yoksa önerme
+   
   const seafoods = pickPresent(I, INGREDIENTS.proteins.seafood);
   if (seafoods.length === 0) return [];
 
@@ -717,7 +717,7 @@ export function buildSeafoodDishCandidates(rawIngredients) {
 
   const candidates = [];
 
-  // stil varyant ekleyici (meat/chicken ile aynı)
+   
   const pushWithStyles = (base) => {
     candidates.push(base);
 
@@ -749,7 +749,7 @@ export function buildSeafoodDishCandidates(rawIngredients) {
     });
   };
 
-  // 1️⃣ Deniz ürünü + tek ana sebze
+   
   if (mains.length === 1) {
     const v = mains[0];
     const cap = capitalize(v);
@@ -767,7 +767,7 @@ export function buildSeafoodDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  // 2️⃣ Deniz ürünü + 2+ ana sebze → karışık
+   
   if (mains.length >= 2) {
     const base = {
       id: "gen:SEAFOOD_MIX",
@@ -782,7 +782,7 @@ export function buildSeafoodDishCandidates(rawIngredients) {
     return candidates;
   }
 
-  // 3️⃣ Sade deniz ürünü (sebze yok)
+   
   const base = {
     id: "gen:SEAFOOD_PLAIN",
     name: "Deniz Ürünü Yemeği",
@@ -806,15 +806,15 @@ export function buildPastryCandidates(rawIngredients) {
   const savoryFillings = pickPresent(I, INGREDIENTS.baking.fillingsSavory);
   const sweetFillings = pickPresent(I, INGREDIENTS.baking.fillingsSweet);
 
-  // Waffle: waffle hamuru VEYA (un + süt + yumurta)
+   
   const hasWaffleBase = hasAny(I, INGREDIENTS.baking.waffleBase);
   const fruits = pickPresent(I, INGREDIENTS.fruits.fresh);
 
-  /* --------------------------------------------------
-     1) BÖREK (HARD: yufka/hamur/lavaş)
-  -------------------------------------------------- */
+  
+
+
   if (hasYufkaBase) {
-    // içe göre varyant
+     
     const makeBorek = (label, usedExtra = []) => ({
       id: `gen:PASTRY_BOREK_${label.toUpperCase()}`,
       name: `${label} Börek`,
@@ -824,7 +824,7 @@ export function buildPastryCandidates(rawIngredients) {
     });
 
     if (savoryFillings.length > 0) {
-      // en fazla 2 iç ile sınırlayalım (liste patlamasın)
+       
       const tops = savoryFillings.slice(0, 2);
       for (const fill of tops) {
         const label =
@@ -843,7 +843,7 @@ export function buildPastryCandidates(rawIngredients) {
         candidates.push(makeBorek(label, [fill]));
       }
     } else {
-      // iç yoksa sade börek
+       
       candidates.push({
         id: "gen:PASTRY_BOREK_PLAIN",
         name: "Sade Börek",
@@ -854,15 +854,15 @@ export function buildPastryCandidates(rawIngredients) {
     }
   }
 
-  /* --------------------------------------------------
-     2) PİDE / PİZZA (HARD: hamur/lavaş)
-     (çok sıkı required yapmıyoruz, kullanıcıda sadece hamur+peynir olabilir)
-  -------------------------------------------------- */
+  
+
+
+
   if (hasYufkaBase) {
     const hasTomato = hasAny(I, ["domates", "salça"]);
     const hasCheese = has(I, "peynir");
 
-    // pizza tarzı
+     
     candidates.push({
       id: "gen:PASTRY_PIZZA_BASE",
       name: "Ev Usulü Pizza",
@@ -892,10 +892,10 @@ export function buildPastryCandidates(rawIngredients) {
     }
   }
 
-  /* --------------------------------------------------
-     3) UN BAZLI (HARD: un)
-     Kek / Kurabiye / Pankek
-  -------------------------------------------------- */
+  
+
+
+
   if (hasFlour) {
     const hasEgg = hasAny(I, INGREDIENTS.baking.eggs);
     const hasLeaven = hasAny(I, INGREDIENTS.baking.leavening);
@@ -903,7 +903,7 @@ export function buildPastryCandidates(rawIngredients) {
     const hasButter = hasAny(I, ["tereyağı"]);
     const hasYogurt = hasAny(I, ["yoğurt"]);
 
-    // KEK: un + (yumurta veya kabartma) + (süt/yoğurt opsiyonel)
+     
     if (hasEgg || hasLeaven) {
       candidates.push({
         id: "gen:PASTRY_CAKE_BASE",
@@ -931,7 +931,7 @@ export function buildPastryCandidates(rawIngredients) {
       }
     }
 
-    // KURABİYE: un + (tereyağı veya yağ) (yumurta opsiyonel)
+     
     if (hasButter || hasAny(I, ["yağ"])) {
       candidates.push({
         id: "gen:PASTRY_COOKIE",
@@ -942,7 +942,7 @@ export function buildPastryCandidates(rawIngredients) {
       });
     }
 
-    // PANKEK: un + süt + yumurta (daha net required)
+     
     if (hasMilk && hasEgg) {
       candidates.push({
         id: "gen:PASTRY_PANCAKE",
@@ -973,7 +973,7 @@ export function buildPastryCandidates(rawIngredients) {
 export function buildMilkDessertCandidates(rawIngredients) {
   const I = normalizeList(rawIngredients);
 
-  // ❌ HARD REQUIRED: süt yoksa sütlü tatlı yok
+   
   if (!hasAny(I, INGREDIENTS.desserts.milkRequired)) return [];
 
   const hasCocoa = hasAny(I, INGREDIENTS.desserts.chocolate);
@@ -986,10 +986,10 @@ export function buildMilkDessertCandidates(rawIngredients) {
 
   const candidates = [];
 
-  /* --------------------------------------------------
-     1) BASE: “Sütlü Tatlı”
-     (süt var ama diğer sinyaller yoksa bile en az 1 öneri çıkar)
-  -------------------------------------------------- */
+  
+
+
+
   candidates.push({
     id: "gen:MILK_DESSERT_BASE",
     name: "Sütlü Tatlı",
@@ -998,9 +998,9 @@ export function buildMilkDessertCandidates(rawIngredients) {
     used_ingredients: ["süt"],
   });
 
-  /* --------------------------------------------------
-     2) MUHALLEBİ / PUDİNG: nişasta varsa anlamlı
-  -------------------------------------------------- */
+  
+
+
   if (hasStarch) {
     candidates.push({
       id: "gen:MILK_DESSERT_MUHALLEBI",
@@ -1031,9 +1031,9 @@ export function buildMilkDessertCandidates(rawIngredients) {
     }
   }
 
-  /* --------------------------------------------------
-     3) SÜTLAÇ: pirinç varsa
-  -------------------------------------------------- */
+  
+
+
   if (hasRice) {
     candidates.push({
       id: "gen:MILK_DESSERT_SUTLAC",
@@ -1043,7 +1043,7 @@ export function buildMilkDessertCandidates(rawIngredients) {
       used_ingredients: ["süt", "pirinç"],
     });
 
-    // opsiyonel: fırında sütlaç varyantı
+     
     candidates.push({
       id: "gen:MILK_DESSERT_SUTLAC_OVEN",
       name: "Fırın Sütlaç",
@@ -1053,9 +1053,9 @@ export function buildMilkDessertCandidates(rawIngredients) {
     });
   }
 
-  /* --------------------------------------------------
-     4) İRMİK TATLISI: irmik varsa
-  -------------------------------------------------- */
+  
+
+
   if (hasSemolina) {
     candidates.push({
       id: "gen:MILK_DESSERT_SEMOLINA",

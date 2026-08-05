@@ -32,7 +32,7 @@ const LoginPage = () => {
       if (data) {
         toast.success("Giriş başarılı! Yönlendiriliyorsunuz...");
         setLoading(false);
-        // 3 saniye beklemek yerine hemen yönlendir
+         
         setTimeout(() => {
           router.push("/");
         }, 1000);
@@ -40,7 +40,7 @@ const LoginPage = () => {
     } catch (error) {
       console.error("❌ Login error:", error);
       
-      // Daha detaylı hata mesajları
+       
       let errorMessage = "Giriş yapılamadı. Lütfen tekrar deneyin.";
       
       if (error?.message) {
